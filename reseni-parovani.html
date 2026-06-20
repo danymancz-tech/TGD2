@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Řešený příklad — Párování a generická hodnost</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#14233b; --ink-soft:#38506e; --paper:#f4f0e6; --paper-2:#ece6d6;
+  --line:#c9bfa8; --line-soft:#ddd5c2; --accent:#c2543a; --accent-2:#2f7d6f;
+  --gold:#b8893b; --white:#fbf9f3; --shadow:rgba(20,35,59,0.10);
+  --ff-display:'Fraunces',Georgia,serif; --ff-body:'Inter',system-ui,sans-serif;
+  --ff-mono:'Spline Sans Mono',ui-monospace,monospace; --maxw:880px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; font-family:var(--ff-body); color:var(--ink); background-color:var(--paper);
+  background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+  background-size:28px 28px; background-position:-1px -1px;
+  line-height:1.62; font-size:17px; -webkit-font-smoothing:antialiased;
+}
+.topbar{position:sticky; top:0; z-index:50; display:flex; align-items:center;
+  justify-content:space-between; gap:1rem; padding:.7rem 1.4rem;
+  background:rgba(244,240,230,.86); backdrop-filter:blur(8px); border-bottom:1px solid var(--line);}
+.topbar .home-link{font-family:var(--ff-mono); font-size:.82rem; letter-spacing:.04em;
+  text-transform:uppercase; color:var(--ink-soft); text-decoration:none; display:inline-flex;
+  align-items:center; gap:.5rem; transition:color .15s;}
+.topbar .home-link:hover{color:var(--accent);}
+.topbar .home-link .arrow{font-size:1rem;}
+.topbar .crumb{font-family:var(--ff-mono); font-size:.78rem; color:var(--ink-soft); letter-spacing:.02em;}
+.topbar .crumb b{color:var(--ink);}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:2.6rem 1.4rem 5rem;}
+
+.topic-head{border-left:4px solid var(--accent); padding-left:1.3rem; margin-bottom:2.4rem;}
+.topic-head .eyebrow{font-family:var(--ff-mono); font-size:.78rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin:0 0 .5rem;}
+.topic-head h1{font-family:var(--ff-display); font-weight:600; font-size:clamp(1.9rem,5vw,2.9rem);
+  line-height:1.08; margin:0 0 .6rem; letter-spacing:-.01em;}
+.topic-head .lede{font-size:1.05rem; color:var(--ink-soft); max-width:60ch; margin:0;}
+
+h2{font-family:var(--ff-display); font-weight:600; font-size:1.55rem; margin:2.8rem 0 .9rem;
+  letter-spacing:-.01em; display:flex; align-items:baseline; gap:.7rem;}
+h2 .num{font-family:var(--ff-mono); font-size:.85rem; color:var(--accent); font-weight:600; letter-spacing:.05em;}
+h3{font-family:var(--ff-body); font-weight:700; font-size:1.12rem; margin:1.9rem 0 .6rem; color:var(--ink);}
+p{margin:.7rem 0;} ul,ol{margin:.7rem 0; padding-left:1.4rem;} li{margin:.35rem 0;}
+strong{font-weight:600;} a{color:var(--accent);}
+.mono{font-family:var(--ff-mono); font-size:.92em;}
+
+.box{border:1px solid var(--line); background:var(--white); border-radius:3px;
+  padding:1.1rem 1.3rem; margin:1.4rem 0; position:relative; box-shadow:0 1px 0 var(--shadow);}
+.box .tag{font-family:var(--ff-mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+  font-weight:600; display:inline-block; margin-bottom:.45rem; padding:.12rem .5rem; border-radius:2px;}
+.box.def{border-left:4px solid var(--ink);} .box.def .tag{background:var(--ink); color:var(--paper);}
+.box.thm{border-left:4px solid var(--accent);} .box.thm .tag{background:var(--accent); color:var(--white);}
+.box.algo{border-left:4px solid var(--accent-2); background:#f3f6f2;} .box.algo .tag{background:var(--accent-2); color:var(--white);}
+.box.note{border-left:4px solid var(--gold); background:#faf6ec;} .box.note .tag{background:var(--gold); color:var(--white);}
+.box.key{border:1px solid var(--accent); background:#fbf1ee;} .box.key .tag{background:var(--accent); color:var(--white);}
+.box p:first-of-type{margin-top:0;} .box p:last-child{margin-bottom:0;}
+
+.formula{font-family:var(--ff-mono); background:var(--paper-2); border:1px solid var(--line-soft);
+  border-radius:3px; padding:.85rem 1.1rem; margin:1rem 0; overflow-x:auto; font-size:.95rem;
+  line-height:1.7; color:var(--ink); white-space:pre-wrap;}
+.formula.center{text-align:center;}
+code,.ic{font-family:var(--ff-mono); background:var(--paper-2); padding:.08em .38em; border-radius:3px; font-size:.88em;}
+
+figure{margin:1.6rem 0; text-align:center;}
+figure svg{max-width:100%; height:auto; background:var(--white); border:1px solid var(--line);
+  border-radius:4px; padding:.8rem; box-shadow:0 2px 8px var(--shadow);}
+figcaption{font-family:var(--ff-mono); font-size:.78rem; color:var(--ink-soft); margin-top:.6rem; letter-spacing:.01em;}
+.g-node{fill:var(--white); stroke:var(--ink); stroke-width:2;}
+.g-node-hl{fill:var(--accent); stroke:var(--ink); stroke-width:2;}
+.g-node-2{fill:var(--accent-2); stroke:var(--ink); stroke-width:2;}
+.g-edge{stroke:var(--ink-soft); stroke-width:2; fill:none;}
+.g-edge-hl{stroke:var(--accent); stroke-width:3.2; fill:none;}
+.g-edge-2{stroke:var(--accent-2); stroke-width:3.2; fill:none;}
+.g-edge-dash{stroke:var(--ink-soft); stroke-width:2; fill:none; stroke-dasharray:3 4;}
+.g-label{font-family:var(--ff-mono); font-size:13px; fill:var(--ink);}
+.g-nlabel{font-family:var(--ff-mono); font-size:13px; fill:var(--ink); font-weight:600;}
+.g-elabel{font-family:var(--ff-mono); font-size:12px; fill:var(--accent);}
+.g-cap{font-family:var(--ff-mono); font-size:12px; fill:var(--ink-soft);}
+.g-elabel-2{font-family:var(--ff-mono); font-size:12px; fill:var(--accent-2);}
+
+table{width:100%; border-collapse:collapse; margin:1.3rem 0; font-size:.95rem;}
+th,td{border:1px solid var(--line); padding:.5rem .7rem; text-align:left;}
+th{background:var(--ink); color:var(--paper); font-weight:600; font-family:var(--ff-body); font-size:.86rem; letter-spacing:.02em;}
+tbody tr:nth-child(even){background:var(--paper-2);}
+td.mono,th.mono{font-family:var(--ff-mono);}
+
+/* --- simplexové / maticové tabló --- */
+.tableau-wrap{overflow-x:auto; margin:1.1rem 0;}
+table.tableau{width:auto; min-width:60%; font-family:var(--ff-mono); font-size:.9rem; margin:0;}
+table.tableau td,table.tableau th{text-align:center; padding:.3rem .55rem; border:1px solid var(--line-soft);}
+table.tableau thead th{background:var(--paper-2); color:var(--ink-soft); font-weight:600; font-size:.78rem; border-bottom:1px solid var(--line);}
+table.tableau tbody tr:nth-child(even){background:transparent;}
+table.tableau .obj td{background:#fbf1ee; border-bottom:2px solid var(--accent);}
+table.tableau .rhs{border-left:2px solid var(--line); font-weight:600; background:var(--paper-2);}
+table.tableau td.piv{background:var(--accent); color:var(--white); font-weight:700;}
+table.tableau td.col-in{background:#f3f6f2;}
+.tcap{font-family:var(--ff-mono); font-size:.76rem; color:var(--ink-soft); margin:.2rem 0 1rem;}
+
+/* --- krokové řešení --- */
+.steps{counter-reset:step; list-style:none; padding-left:0; margin:1.4rem 0;}
+.steps>li{position:relative; padding-left:2.6rem; margin:1.1rem 0;}
+.steps>li::before{counter-increment:step; content:counter(step); position:absolute; left:0; top:.05rem;
+  width:1.7rem; height:1.7rem; border-radius:50%; background:var(--ink); color:var(--paper);
+  font-family:var(--ff-mono); font-size:.82rem; font-weight:600; display:flex; align-items:center; justify-content:center;}
+.steps>li>.st-h{font-weight:700; display:block; margin-bottom:.15rem;}
+
+.legend{display:flex; flex-wrap:wrap; gap:1rem 1.6rem; font-family:var(--ff-mono); font-size:.78rem;
+  color:var(--ink-soft); margin:.4rem 0 1rem; padding:.7rem 1rem; background:var(--white);
+  border:1px solid var(--line-soft); border-radius:4px;}
+.legend span{display:inline-flex; align-items:center; gap:.5rem;}
+.legend .sw{width:22px; height:0; border-top-width:3px; border-top-style:solid; display:inline-block;}
+.legend .dot{width:13px; height:13px; border-radius:50%; display:inline-block; border:2px solid var(--ink);}
+
+.result{border:1px solid var(--accent); background:#fbf1ee; border-radius:4px; padding:1rem 1.2rem; margin:1.4rem 0;}
+.result .tag{font-family:var(--ff-mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+  font-weight:600; color:var(--accent); display:block; margin-bottom:.3rem;}
+
+.exam-points{background:var(--ink); color:var(--paper); border-radius:4px; padding:1.4rem 1.6rem; margin:2.4rem 0 1rem;}
+.exam-points h3{color:var(--white); margin-top:0; font-family:var(--ff-mono); font-size:.8rem; letter-spacing:.14em; text-transform:uppercase;}
+.exam-points ul{list-style:none; padding-left:0;}
+.exam-points li{padding-left:1.6rem; position:relative; color:var(--paper);}
+.exam-points li::before{content:"\25B8"; position:absolute; left:.2rem; color:var(--accent);}
+.exam-points strong{color:var(--white);}
+
+.pager{display:flex; justify-content:space-between; gap:1rem; margin-top:3.5rem; padding-top:1.6rem; border-top:1px solid var(--line);}
+.pager a{text-decoration:none; color:var(--ink); font-family:var(--ff-mono); font-size:.82rem;
+  display:flex; flex-direction:column; gap:.2rem; max-width:45%; transition:color .15s;}
+.pager a:hover{color:var(--accent);}
+.pager a.next{text-align:right; align-items:flex-end;}
+.pager .dir{font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft);}
+.pager .ttl{font-weight:600;}
+.pager a.disabled{visibility:hidden;}
+
+/* --- rozcestník (karty) --- */
+.group{margin:2.6rem 0;}
+.group-head{font-family:var(--ff-display); font-weight:600; font-size:1.4rem; margin:0 0 1rem;
+  padding-left:.9rem; border-left:4px solid var(--gc); display:flex; align-items:center; gap:.7rem;}
+.card-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:.9rem;}
+.card{display:flex; flex-direction:column; gap:.35rem; text-decoration:none; color:var(--ink);
+  background:var(--white); border:1px solid var(--line); border-left:4px solid var(--gc);
+  border-radius:4px; padding:1rem 1.1rem; transition:transform .14s ease,box-shadow .14s ease; position:relative;}
+.card:hover{transform:translateY(-3px); box-shadow:0 8px 20px var(--shadow);}
+.card-num{font-family:var(--ff-mono); font-size:.78rem; font-weight:600; color:var(--gc); letter-spacing:.08em;}
+.card-title{font-weight:600; font-size:1.02rem; line-height:1.25;}
+.card-sub{font-family:var(--ff-mono); font-size:.74rem; color:var(--ink-soft); line-height:1.45;}
+
+.hero{position:relative; border:1px solid var(--line); background:var(--ink); color:var(--paper);
+  border-radius:6px; padding:3rem 2.4rem 2.6rem; margin:2.4rem 0 3rem; overflow:hidden;}
+.hero::before{content:""; position:absolute; inset:0;
+  background-image:linear-gradient(rgba(244,240,230,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(244,240,230,.06) 1px,transparent 1px);
+  background-size:26px 26px; pointer-events:none;}
+.hero .kicker{font-family:var(--ff-mono); font-size:.8rem; letter-spacing:.2em; text-transform:uppercase; color:var(--accent); margin:0 0 .8rem; position:relative;}
+.hero h1{font-family:var(--ff-display); font-weight:600; font-size:clamp(2.1rem,6vw,3.6rem); line-height:1.04; margin:0 0 1rem; letter-spacing:-.02em; position:relative; color:var(--white);}
+.hero h1 em{font-style:italic; color:var(--accent);}
+.hero p{max-width:58ch; color:#cdd6e2; position:relative; margin:0; font-size:1.06rem;}
+.hero .meta{display:flex; gap:1.6rem; flex-wrap:wrap; margin-top:1.6rem; position:relative; font-family:var(--ff-mono); font-size:.82rem; color:#9fb0c4;}
+.hero .meta b{color:var(--white);}
+.hero svg.motif{position:absolute; right:-10px; top:-10px; opacity:.5;}
+
+.site-foot{margin-top:3rem; padding-top:1.4rem; border-top:1px solid var(--line);
+  font-family:var(--ff-mono); font-size:.76rem; color:var(--ink-soft); display:flex; justify-content:space-between; flex-wrap:wrap; gap:.6rem;}
+
+@media (max-width:600px){body{font-size:16px;} .wrap{padding:1.8rem 1.1rem 4rem;} h2{font-size:1.35rem;}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;} *{animation:none !important; transition:none !important;}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="home-link" href="reseni-prikladu.html"><span class="arrow">←</span> Řešené příklady</a>
+  <span class="crumb">Řešené příklady / <b>Párování &amp; generická hodnost</b></span>
+</header>
+
+<main class="wrap">
+
+  <div class="topic-head">
+    <p class="eyebrow">Řešený příklad Ř05</p>
+    <h1>Párování a generická hodnost</h1>
+    <p class="lede">Tři úlohy nad bipartitními grafy: generická hodnost matice přes Hallovu větu
+    a&nbsp;dvakrát optimální (vážené) párování Kuhnovým&ndash;Munkresovým (maďarským) algoritmem.</p>
+  </div>
+
+  <!-- ================= GENERICKÁ HODNOST ================= -->
+  <h2><span class="num">1</span> Generická hodnost matice</h2>
+  <p>Lze zvolit čísla <span class="mono">a, …, s</span> tak, aby matice <span class="mono">A</span> byla regulární?</p>
+  <div class="formula">      y1 y2 y3 y4 y5 y6
+x1 [  a  0  b  0  0  c ]
+x2 [  0  d  0  e  f  g ]
+x3 [  h  0  i  0  0  0 ]
+x4 [  0  0  j  0  0  k ]
+x5 [  l  m  n  o  p  0 ]
+x6 [  r  0  0  0  0  s ]</div>
+
+  <div class="box thm">
+    <span class="tag">Kritérium</span>
+    <p>Matice <span class="mono">A</span> je <strong>genericky regulární</strong> právě tehdy, když v&nbsp;jejím
+    bipartitním grafu <span class="mono">B(A)</span> (řádky ↔ sloupce, hrana = nenulový prvek) existuje
+    <strong>perfektní párování</strong>. Maximální generická hodnost <span class="mono">gh(A)</span> rovná se
+    velikosti maximálního párování v&nbsp;<span class="mono">B(A)</span>.</p>
+  </div>
+
+  <p>Sestrojíme <span class="mono">B(A)</span>. Zvýrazněné hrany tvoří maximální párování (5&nbsp;hran),
+  zakroužkovaná množina <span class="mono">S</span> porušuje Hallovu podmínku:</p>
+
+  <figure>
+  <svg viewBox="0 0 430 390" xmlns="http://www.w3.org/2000/svg">
+    <!-- non-matching edges (dashed) -->
+    <!-- x1: y1,y3,y6 -->
+    <line class="g-edge-dash" x1="80" y1="45" x2="350" y2="45"/>
+    <line class="g-edge-dash" x1="80" y1="45" x2="350" y2="165"/>
+    <line class="g-edge-dash" x1="80" y1="45" x2="350" y2="345"/>
+    <!-- x2: y2,y5,y6 -->
+    <line class="g-edge-dash" x1="80" y1="105" x2="350" y2="105"/>
+    <line class="g-edge-dash" x1="80" y1="105" x2="350" y2="285"/>
+    <line class="g-edge-dash" x1="80" y1="105" x2="350" y2="345"/>
+    <!-- x3: y3 -->
+    <line class="g-edge-dash" x1="80" y1="165" x2="350" y2="165"/>
+    <!-- x4: y6 -->
+    <line class="g-edge-dash" x1="80" y1="225" x2="350" y2="345"/>
+    <!-- x5: y1,y2,y3,y4 -->
+    <line class="g-edge-dash" x1="80" y1="285" x2="350" y2="45"/>
+    <line class="g-edge-dash" x1="80" y1="285" x2="350" y2="105"/>
+    <line class="g-edge-dash" x1="80" y1="285" x2="350" y2="165"/>
+    <line class="g-edge-dash" x1="80" y1="285" x2="350" y2="225"/>
+    <!-- x6: y1 -->
+    <line class="g-edge-dash" x1="80" y1="345" x2="350" y2="45"/>
+    <!-- matching edges (highlighted) -->
+    <line class="g-edge-hl" x1="80" y1="165" x2="350" y2="45"/>   <!-- x3-y1 -->
+    <line class="g-edge-hl" x1="80" y1="225" x2="350" y2="165"/>  <!-- x4-y3 -->
+    <line class="g-edge-hl" x1="80" y1="345" x2="350" y2="345"/>  <!-- x6-y6 -->
+    <line class="g-edge-hl" x1="80" y1="105" x2="350" y2="225"/>  <!-- x2-y4 -->
+    <line class="g-edge-hl" x1="80" y1="285" x2="350" y2="285"/>  <!-- x5-y5 -->
+    <!-- left nodes X -->
+    <circle class="g-node-hl" cx="80" cy="45"  r="15"/><text class="g-nlabel" x="80" y="50" text-anchor="middle" fill="#fff">x1</text>
+    <circle class="g-node"    cx="80" cy="105" r="15"/><text class="g-nlabel" x="80" y="110" text-anchor="middle">x2</text>
+    <circle class="g-node-hl" cx="80" cy="165" r="15"/><text class="g-nlabel" x="80" y="170" text-anchor="middle" fill="#fff">x3</text>
+    <circle class="g-node-hl" cx="80" cy="225" r="15"/><text class="g-nlabel" x="80" y="230" text-anchor="middle" fill="#fff">x4</text>
+    <circle class="g-node"    cx="80" cy="285" r="15"/><text class="g-nlabel" x="80" y="290" text-anchor="middle">x5</text>
+    <circle class="g-node-hl" cx="80" cy="345" r="15"/><text class="g-nlabel" x="80" y="350" text-anchor="middle" fill="#fff">x6</text>
+    <!-- right nodes Y -->
+    <circle class="g-node-2" cx="350" cy="45"  r="15"/><text class="g-nlabel" x="350" y="50" text-anchor="middle" fill="#fff">1</text>
+    <circle class="g-node"   cx="350" cy="105" r="15"/><text class="g-nlabel" x="350" y="110" text-anchor="middle">2</text>
+    <circle class="g-node-2" cx="350" cy="165" r="15"/><text class="g-nlabel" x="350" y="170" text-anchor="middle" fill="#fff">3</text>
+    <circle class="g-node"   cx="350" cy="225" r="15"/><text class="g-nlabel" x="350" y="230" text-anchor="middle">4</text>
+    <circle class="g-node"   cx="350" cy="285" r="15"/><text class="g-nlabel" x="350" y="290" text-anchor="middle">5</text>
+    <circle class="g-node-2" cx="350" cy="345" r="15"/><text class="g-nlabel" x="350" y="350" text-anchor="middle" fill="#fff">6</text>
+    <text class="g-label" x="80"  y="20" text-anchor="middle">X (řádky)</text>
+    <text class="g-label" x="350" y="20" text-anchor="middle">Y (sloupce)</text>
+  </svg>
+  <figcaption>B(A): červené uzly = S = {x1,x3,x4,x6}, zelené = N(S) = {1,3,6}. Zvýrazněné hrany = maximální párování.</figcaption>
+  </figure>
+
+  <p><strong>Hallova podmínka.</strong> Vezmeme <span class="mono">S = {x1, x3, x4, x6}</span>. Jejich sousedé:</p>
+  <div class="formula">N(x1)={1,3,6}, N(x3)={1,3}, N(x4)={3,6}, N(x6)={1,6}
+N(S) = {1, 3, 6}   →   |N(S)| = 3 < 4 = |S|</div>
+  <p>Hallova podmínka je porušena, takže <strong>perfektní párování neexistuje</strong> a&nbsp;<span class="mono">A</span>
+  nemůže být genericky regulární.</p>
+
+  <div class="result">
+    <span class="tag">Výsledek</span>
+    <p>Maximální párování má 5&nbsp;hran (např. <span class="mono">x3–1, x4–3, x6–6, x2–4, x5–5</span>),
+    proto <span class="mono">gh(A) = 5</span>. Matice <strong>regulární být nemůže</strong>.</p>
+  </div>
+
+  <!-- ================= KUHN–MUNKRES 1 ================= -->
+  <h2><span class="num">2</span> Optimální párování 1 (Kuhn–Munkres)</h2>
+  <p>Najděte <strong>maximální</strong> (nejdražší) párování v&nbsp;úplném bigrafu s&nbsp;maticí cen <span class="mono">W</span>:</p>
+
+  <div class="tableau-wrap"><table class="tableau">
+    <thead><tr><th>W</th><th>y1</th><th>y2</th><th>y3</th><th>y4</th><th>y5</th><th>y6</th><th class="rhs">ℓ(xᵢ)</th></tr></thead>
+    <tbody>
+      <tr><th>x1</th><td>3</td><td>5</td><td>2</td><td>0</td><td>1</td><td>3</td><td class="rhs">5</td></tr>
+      <tr><th>x2</th><td>7</td><td>7</td><td>7</td><td>5</td><td>7</td><td>4</td><td class="rhs">7</td></tr>
+      <tr><th>x3</th><td>3</td><td>4</td><td>2</td><td>4</td><td>2</td><td>1</td><td class="rhs">4</td></tr>
+      <tr><th>x4</th><td>1</td><td>5</td><td>3</td><td>5</td><td>4</td><td>2</td><td class="rhs">5</td></tr>
+      <tr><th>x5</th><td>3</td><td>4</td><td>2</td><td>6</td><td>5</td><td>3</td><td class="rhs">6</td></tr>
+      <tr><th>x6</th><td>2</td><td>4</td><td>3</td><td>5</td><td>5</td><td>5</td><td class="rhs">5</td></tr>
+    </tbody></table></div>
+
+  <div class="box algo">
+    <span class="tag">Postup</span>
+    <p>1. <strong>Počáteční přípustné ohodnocení:</strong> <span class="mono">ℓ(xᵢ) = max řádku</span> (sloupec vpravo),
+    <span class="mono">ℓ(yⱼ) = 0</span>.<br>
+    2. Graf rovnosti <span class="mono">G_ℓ</span> = hrany, kde <span class="mono">ℓ(xᵢ)+ℓ(yⱼ) = wᵢⱼ</span>.<br>
+    3. Maďarský algoritmus hledá rozšiřující cesty; když narazí na&nbsp;množinu <span class="mono">S</span>
+    s&nbsp;<span class="mono">|N(S)| &lt; |S|</span>, opraví ohodnocení o&nbsp;<span class="mono">α = min{ℓ(xᵢ)+ℓ(yⱼ)−wᵢⱼ}</span>
+    (přes <span class="mono">xᵢ∈S, yⱼ∉T</span>) — zmenší na&nbsp;<span class="mono">S</span>, zvětší na&nbsp;<span class="mono">T</span>.<br>
+    4. Opakuje, až je párování v&nbsp;<span class="mono">G_ℓ</span> perfektní — to je optimum.</p>
+  </div>
+
+  <p>Po&nbsp;sérii oprav ohodnocení (zde <span class="mono">α = 1</span>) a&nbsp;rozšiřujících cest
+  <span class="mono">x4y4x3y1</span> a&nbsp;<span class="mono">x5y5x6y6</span> dostaneme perfektní párování:</p>
+
+  <figure>
+  <svg viewBox="0 0 430 390" xmlns="http://www.w3.org/2000/svg">
+    <line class="g-edge-hl" x1="80" y1="45"  x2="350" y2="105"/> <!-- x1-y2 -->
+    <line class="g-edge-hl" x1="80" y1="105" x2="350" y2="165"/> <!-- x2-y3 -->
+    <line class="g-edge-hl" x1="80" y1="165" x2="350" y2="45"/>  <!-- x3-y1 -->
+    <line class="g-edge-hl" x1="80" y1="225" x2="350" y2="285"/> <!-- x4-y5 -->
+    <line class="g-edge-hl" x1="80" y1="285" x2="350" y2="225"/> <!-- x5-y4 -->
+    <line class="g-edge-hl" x1="80" y1="345" x2="350" y2="345"/> <!-- x6-y6 -->
+    <circle class="g-node" cx="80" cy="45"  r="15"/><text class="g-nlabel" x="80" y="50" text-anchor="middle">x1</text>
+    <circle class="g-node" cx="80" cy="105" r="15"/><text class="g-nlabel" x="80" y="110" text-anchor="middle">x2</text>
+    <circle class="g-node" cx="80" cy="165" r="15"/><text class="g-nlabel" x="80" y="170" text-anchor="middle">x3</text>
+    <circle class="g-node" cx="80" cy="225" r="15"/><text class="g-nlabel" x="80" y="230" text-anchor="middle">x4</text>
+    <circle class="g-node" cx="80" cy="285" r="15"/><text class="g-nlabel" x="80" y="290" text-anchor="middle">x5</text>
+    <circle class="g-node" cx="80" cy="345" r="15"/><text class="g-nlabel" x="80" y="350" text-anchor="middle">x6</text>
+    <circle class="g-node-2" cx="350" cy="45"  r="15"/><text class="g-nlabel" x="350" y="50" text-anchor="middle" fill="#fff">y1</text>
+    <circle class="g-node-2" cx="350" cy="105" r="15"/><text class="g-nlabel" x="350" y="110" text-anchor="middle" fill="#fff">y2</text>
+    <circle class="g-node-2" cx="350" cy="165" r="15"/><text class="g-nlabel" x="350" y="170" text-anchor="middle" fill="#fff">y3</text>
+    <circle class="g-node-2" cx="350" cy="225" r="15"/><text class="g-nlabel" x="350" y="230" text-anchor="middle" fill="#fff">y4</text>
+    <circle class="g-node-2" cx="350" cy="285" r="15"/><text class="g-nlabel" x="350" y="290" text-anchor="middle" fill="#fff">y5</text>
+    <circle class="g-node-2" cx="350" cy="345" r="15"/><text class="g-nlabel" x="350" y="350" text-anchor="middle" fill="#fff">y6</text>
+  </svg>
+  <figcaption>Optimální párování M: x1–y2, x2–y3, x3–y1, x4–y5, x5–y4, x6–y6.</figcaption>
+  </figure>
+
+  <div class="result">
+    <span class="tag">Výsledek</span>
+    <p>Cena <span class="mono">M = 5 + 7 + 3 + 4 + 6 + 5 = 30</span>.</p>
+  </div>
+
+  <!-- ================= KUHN–MUNKRES 2 ================= -->
+  <h2><span class="num">3</span> Optimální párování 2 (Kuhn–Munkres)</h2>
+  <div class="tableau-wrap"><table class="tableau">
+    <thead><tr><th>W</th><th>y1</th><th>y2</th><th>y3</th><th>y4</th><th>y5</th><th>y6</th><th class="rhs">ℓ(xᵢ)</th></tr></thead>
+    <tbody>
+      <tr><th>x1</th><td>5</td><td>3</td><td>4</td><td>3</td><td>1</td><td>2</td><td class="rhs">5</td></tr>
+      <tr><th>x2</th><td>6</td><td>6</td><td>4</td><td>3</td><td>5</td><td>2</td><td class="rhs">6</td></tr>
+      <tr><th>x3</th><td>5</td><td>5</td><td>4</td><td>3</td><td>4</td><td>3</td><td class="rhs">5</td></tr>
+      <tr><th>x4</th><td>3</td><td>5</td><td>6</td><td>6</td><td>6</td><td>4</td><td class="rhs">6</td></tr>
+      <tr><th>x5</th><td>4</td><td>3</td><td>2</td><td>4</td><td>3</td><td>6</td><td class="rhs">6</td></tr>
+      <tr><th>x6</th><td>4</td><td>3</td><td>4</td><td>2</td><td>4</td><td>6</td><td class="rhs">6</td></tr>
+    </tbody></table></div>
+
+  <p>Stejný postup: počáteční <span class="mono">ℓ(xᵢ)</span> = maxima řádků, <span class="mono">ℓ(yⱼ)=0</span>.
+  Opravy ohodnocení (<span class="mono">α = 2</span>, pak <span class="mono">α = 1</span>) a&nbsp;rozšiřující cesty
+  <span class="mono">x5y6x6y3</span>, <span class="mono">x3y3x6y5</span> vedou na&nbsp;perfektní párování:</p>
+
+  <figure>
+  <svg viewBox="0 0 430 390" xmlns="http://www.w3.org/2000/svg">
+    <line class="g-edge-hl" x1="80" y1="45"  x2="350" y2="45"/>  <!-- x1-y1 -->
+    <line class="g-edge-hl" x1="80" y1="105" x2="350" y2="105"/> <!-- x2-y2 -->
+    <line class="g-edge-hl" x1="80" y1="165" x2="350" y2="285"/> <!-- x3-y5 -->
+    <line class="g-edge-hl" x1="80" y1="225" x2="350" y2="225"/> <!-- x4-y4 -->
+    <line class="g-edge-hl" x1="80" y1="285" x2="350" y2="345"/> <!-- x5-y6 -->
+    <line class="g-edge-hl" x1="80" y1="345" x2="350" y2="165"/> <!-- x6-y3 -->
+    <circle class="g-node" cx="80" cy="45"  r="15"/><text class="g-nlabel" x="80" y="50" text-anchor="middle">x1</text>
+    <circle class="g-node" cx="80" cy="105" r="15"/><text class="g-nlabel" x="80" y="110" text-anchor="middle">x2</text>
+    <circle class="g-node" cx="80" cy="165" r="15"/><text class="g-nlabel" x="80" y="170" text-anchor="middle">x3</text>
+    <circle class="g-node" cx="80" cy="225" r="15"/><text class="g-nlabel" x="80" y="230" text-anchor="middle">x4</text>
+    <circle class="g-node" cx="80" cy="285" r="15"/><text class="g-nlabel" x="80" y="290" text-anchor="middle">x5</text>
+    <circle class="g-node" cx="80" cy="345" r="15"/><text class="g-nlabel" x="80" y="350" text-anchor="middle">x6</text>
+    <circle class="g-node-2" cx="350" cy="45"  r="15"/><text class="g-nlabel" x="350" y="50" text-anchor="middle" fill="#fff">y1</text>
+    <circle class="g-node-2" cx="350" cy="105" r="15"/><text class="g-nlabel" x="350" y="110" text-anchor="middle" fill="#fff">y2</text>
+    <circle class="g-node-2" cx="350" cy="165" r="15"/><text class="g-nlabel" x="350" y="170" text-anchor="middle" fill="#fff">y3</text>
+    <circle class="g-node-2" cx="350" cy="225" r="15"/><text class="g-nlabel" x="350" y="230" text-anchor="middle" fill="#fff">y4</text>
+    <circle class="g-node-2" cx="350" cy="285" r="15"/><text class="g-nlabel" x="350" y="290" text-anchor="middle" fill="#fff">y5</text>
+    <circle class="g-node-2" cx="350" cy="345" r="15"/><text class="g-nlabel" x="350" y="350" text-anchor="middle" fill="#fff">y6</text>
+  </svg>
+  <figcaption>Optimální párování M: x1–y1, x2–y2, x3–y5, x4–y4, x5–y6, x6–y3.</figcaption>
+  </figure>
+
+  <div class="result">
+    <span class="tag">Výsledek</span>
+    <p>Cena <span class="mono">M = 5 + 6 + 4 + 6 + 6 + 4 = 31</span>.</p>
+  </div>
+
+  <div class="exam-points">
+    <h3>Na co dát pozor</h3>
+    <ul>
+      <li><strong>Generická hodnost:</strong> hledá se <em>největší</em> párování v&nbsp;<span class="mono">B(A)</span>;
+      regularita ⇔ perfektní párování. Neregularitu dokazuje <strong>jedna</strong> Hallova porušující množina <span class="mono">S</span>.</li>
+      <li>Při hledání <span class="mono">S</span>: začni od&nbsp;nepokrytého uzlu, střídej nepárovací/párovací hrany;
+      <span class="mono">S</span> jsou dosažené uzly v&nbsp;<span class="mono">X</span>, <span class="mono">T</span> v&nbsp;<span class="mono">Y</span>.</li>
+      <li><strong>Kuhn–Munkres</strong> řeší <em>maximalizaci</em> ceny. Pro&nbsp;minimalizaci převeď <span class="mono">wᵢⱼ → C − wᵢⱼ</span>.</li>
+      <li>Invariant: <span class="mono">ℓ(xᵢ)+ℓ(yⱼ) ≥ wᵢⱼ</span> stále platí; oprava o&nbsp;<span class="mono">α</span> přidá do&nbsp;<span class="mono">G_ℓ</span>
+      aspoň jednu novou hranu.</li>
+      <li>Cena optimálního párování = <span class="mono">Σ ℓ(xᵢ) + Σ ℓ(yⱼ)</span> (duální kontrola výsledku).</li>
+    </ul>
+  </div>
+
+  <nav class="pager">
+    <a class="prev" href="reseni-dualita.html"><span class="dir">← předchozí</span><span class="ttl">Dualita úloh LP</span></a>
+    <a class="next" href="reseni-grafy-tsp.html"><span class="dir">další →</span><span class="ttl">Hranové grafy &amp; TSP</span></a>
+  </nav>
+
+</main>
+</body>
+</html>

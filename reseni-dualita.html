@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Řešený příklad — Dualita úloh LP</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#14233b; --ink-soft:#38506e; --paper:#f4f0e6; --paper-2:#ece6d6;
+  --line:#c9bfa8; --line-soft:#ddd5c2; --accent:#c2543a; --accent-2:#2f7d6f;
+  --gold:#b8893b; --white:#fbf9f3; --shadow:rgba(20,35,59,0.10);
+  --ff-display:'Fraunces',Georgia,serif; --ff-body:'Inter',system-ui,sans-serif;
+  --ff-mono:'Spline Sans Mono',ui-monospace,monospace; --maxw:880px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; font-family:var(--ff-body); color:var(--ink); background-color:var(--paper);
+  background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+  background-size:28px 28px; background-position:-1px -1px;
+  line-height:1.62; font-size:17px; -webkit-font-smoothing:antialiased;
+}
+.topbar{position:sticky; top:0; z-index:50; display:flex; align-items:center;
+  justify-content:space-between; gap:1rem; padding:.7rem 1.4rem;
+  background:rgba(244,240,230,.86); backdrop-filter:blur(8px); border-bottom:1px solid var(--line);}
+.topbar .home-link{font-family:var(--ff-mono); font-size:.82rem; letter-spacing:.04em;
+  text-transform:uppercase; color:var(--ink-soft); text-decoration:none; display:inline-flex;
+  align-items:center; gap:.5rem; transition:color .15s;}
+.topbar .home-link:hover{color:var(--accent);}
+.topbar .home-link .arrow{font-size:1rem;}
+.topbar .crumb{font-family:var(--ff-mono); font-size:.78rem; color:var(--ink-soft); letter-spacing:.02em;}
+.topbar .crumb b{color:var(--ink);}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:2.6rem 1.4rem 5rem;}
+
+.topic-head{border-left:4px solid var(--accent); padding-left:1.3rem; margin-bottom:2.4rem;}
+.topic-head .eyebrow{font-family:var(--ff-mono); font-size:.78rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin:0 0 .5rem;}
+.topic-head h1{font-family:var(--ff-display); font-weight:600; font-size:clamp(1.9rem,5vw,2.9rem);
+  line-height:1.08; margin:0 0 .6rem; letter-spacing:-.01em;}
+.topic-head .lede{font-size:1.05rem; color:var(--ink-soft); max-width:60ch; margin:0;}
+
+h2{font-family:var(--ff-display); font-weight:600; font-size:1.55rem; margin:2.8rem 0 .9rem;
+  letter-spacing:-.01em; display:flex; align-items:baseline; gap:.7rem;}
+h2 .num{font-family:var(--ff-mono); font-size:.85rem; color:var(--accent); font-weight:600; letter-spacing:.05em;}
+h3{font-family:var(--ff-body); font-weight:700; font-size:1.12rem; margin:1.9rem 0 .6rem; color:var(--ink);}
+p{margin:.7rem 0;} ul,ol{margin:.7rem 0; padding-left:1.4rem;} li{margin:.35rem 0;}
+strong{font-weight:600;} a{color:var(--accent);}
+.mono{font-family:var(--ff-mono); font-size:.92em;}
+
+.box{border:1px solid var(--line); background:var(--white); border-radius:3px;
+  padding:1.1rem 1.3rem; margin:1.4rem 0; position:relative; box-shadow:0 1px 0 var(--shadow);}
+.box .tag{font-family:var(--ff-mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+  font-weight:600; display:inline-block; margin-bottom:.45rem; padding:.12rem .5rem; border-radius:2px;}
+.box.def{border-left:4px solid var(--ink);} .box.def .tag{background:var(--ink); color:var(--paper);}
+.box.thm{border-left:4px solid var(--accent);} .box.thm .tag{background:var(--accent); color:var(--white);}
+.box.algo{border-left:4px solid var(--accent-2); background:#f3f6f2;} .box.algo .tag{background:var(--accent-2); color:var(--white);}
+.box.note{border-left:4px solid var(--gold); background:#faf6ec;} .box.note .tag{background:var(--gold); color:var(--white);}
+.box.key{border:1px solid var(--accent); background:#fbf1ee;} .box.key .tag{background:var(--accent); color:var(--white);}
+.box p:first-of-type{margin-top:0;} .box p:last-child{margin-bottom:0;}
+
+.formula{font-family:var(--ff-mono); background:var(--paper-2); border:1px solid var(--line-soft);
+  border-radius:3px; padding:.85rem 1.1rem; margin:1rem 0; overflow-x:auto; font-size:.95rem;
+  line-height:1.7; color:var(--ink); white-space:pre-wrap;}
+.formula.center{text-align:center;}
+code,.ic{font-family:var(--ff-mono); background:var(--paper-2); padding:.08em .38em; border-radius:3px; font-size:.88em;}
+
+figure{margin:1.6rem 0; text-align:center;}
+figure svg{max-width:100%; height:auto; background:var(--white); border:1px solid var(--line);
+  border-radius:4px; padding:.8rem; box-shadow:0 2px 8px var(--shadow);}
+figcaption{font-family:var(--ff-mono); font-size:.78rem; color:var(--ink-soft); margin-top:.6rem; letter-spacing:.01em;}
+.g-node{fill:var(--white); stroke:var(--ink); stroke-width:2;}
+.g-node-hl{fill:var(--accent); stroke:var(--ink); stroke-width:2;}
+.g-node-2{fill:var(--accent-2); stroke:var(--ink); stroke-width:2;}
+.g-edge{stroke:var(--ink-soft); stroke-width:2; fill:none;}
+.g-edge-hl{stroke:var(--accent); stroke-width:3.2; fill:none;}
+.g-edge-2{stroke:var(--accent-2); stroke-width:3.2; fill:none;}
+.g-edge-dash{stroke:var(--ink-soft); stroke-width:2; fill:none; stroke-dasharray:3 4;}
+.g-label{font-family:var(--ff-mono); font-size:13px; fill:var(--ink);}
+.g-nlabel{font-family:var(--ff-mono); font-size:13px; fill:var(--ink); font-weight:600;}
+.g-elabel{font-family:var(--ff-mono); font-size:12px; fill:var(--accent);}
+.g-cap{font-family:var(--ff-mono); font-size:12px; fill:var(--ink-soft);}
+.g-elabel-2{font-family:var(--ff-mono); font-size:12px; fill:var(--accent-2);}
+
+table{width:100%; border-collapse:collapse; margin:1.3rem 0; font-size:.95rem;}
+th,td{border:1px solid var(--line); padding:.5rem .7rem; text-align:left;}
+th{background:var(--ink); color:var(--paper); font-weight:600; font-family:var(--ff-body); font-size:.86rem; letter-spacing:.02em;}
+tbody tr:nth-child(even){background:var(--paper-2);}
+td.mono,th.mono{font-family:var(--ff-mono);}
+
+/* --- simplexové / maticové tabló --- */
+.tableau-wrap{overflow-x:auto; margin:1.1rem 0;}
+table.tableau{width:auto; min-width:60%; font-family:var(--ff-mono); font-size:.9rem; margin:0;}
+table.tableau td,table.tableau th{text-align:center; padding:.3rem .55rem; border:1px solid var(--line-soft);}
+table.tableau thead th{background:var(--paper-2); color:var(--ink-soft); font-weight:600; font-size:.78rem; border-bottom:1px solid var(--line);}
+table.tableau tbody tr:nth-child(even){background:transparent;}
+table.tableau .obj td{background:#fbf1ee; border-bottom:2px solid var(--accent);}
+table.tableau .rhs{border-left:2px solid var(--line); font-weight:600; background:var(--paper-2);}
+table.tableau td.piv{background:var(--accent); color:var(--white); font-weight:700;}
+table.tableau td.col-in{background:#f3f6f2;}
+.tcap{font-family:var(--ff-mono); font-size:.76rem; color:var(--ink-soft); margin:.2rem 0 1rem;}
+
+/* --- krokové řešení --- */
+.steps{counter-reset:step; list-style:none; padding-left:0; margin:1.4rem 0;}
+.steps>li{position:relative; padding-left:2.6rem; margin:1.1rem 0;}
+.steps>li::before{counter-increment:step; content:counter(step); position:absolute; left:0; top:.05rem;
+  width:1.7rem; height:1.7rem; border-radius:50%; background:var(--ink); color:var(--paper);
+  font-family:var(--ff-mono); font-size:.82rem; font-weight:600; display:flex; align-items:center; justify-content:center;}
+.steps>li>.st-h{font-weight:700; display:block; margin-bottom:.15rem;}
+
+.legend{display:flex; flex-wrap:wrap; gap:1rem 1.6rem; font-family:var(--ff-mono); font-size:.78rem;
+  color:var(--ink-soft); margin:.4rem 0 1rem; padding:.7rem 1rem; background:var(--white);
+  border:1px solid var(--line-soft); border-radius:4px;}
+.legend span{display:inline-flex; align-items:center; gap:.5rem;}
+.legend .sw{width:22px; height:0; border-top-width:3px; border-top-style:solid; display:inline-block;}
+.legend .dot{width:13px; height:13px; border-radius:50%; display:inline-block; border:2px solid var(--ink);}
+
+.result{border:1px solid var(--accent); background:#fbf1ee; border-radius:4px; padding:1rem 1.2rem; margin:1.4rem 0;}
+.result .tag{font-family:var(--ff-mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+  font-weight:600; color:var(--accent); display:block; margin-bottom:.3rem;}
+
+.exam-points{background:var(--ink); color:var(--paper); border-radius:4px; padding:1.4rem 1.6rem; margin:2.4rem 0 1rem;}
+.exam-points h3{color:var(--white); margin-top:0; font-family:var(--ff-mono); font-size:.8rem; letter-spacing:.14em; text-transform:uppercase;}
+.exam-points ul{list-style:none; padding-left:0;}
+.exam-points li{padding-left:1.6rem; position:relative; color:var(--paper);}
+.exam-points li::before{content:"\25B8"; position:absolute; left:.2rem; color:var(--accent);}
+.exam-points strong{color:var(--white);}
+
+.pager{display:flex; justify-content:space-between; gap:1rem; margin-top:3.5rem; padding-top:1.6rem; border-top:1px solid var(--line);}
+.pager a{text-decoration:none; color:var(--ink); font-family:var(--ff-mono); font-size:.82rem;
+  display:flex; flex-direction:column; gap:.2rem; max-width:45%; transition:color .15s;}
+.pager a:hover{color:var(--accent);}
+.pager a.next{text-align:right; align-items:flex-end;}
+.pager .dir{font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft);}
+.pager .ttl{font-weight:600;}
+.pager a.disabled{visibility:hidden;}
+
+/* --- rozcestník (karty) --- */
+.group{margin:2.6rem 0;}
+.group-head{font-family:var(--ff-display); font-weight:600; font-size:1.4rem; margin:0 0 1rem;
+  padding-left:.9rem; border-left:4px solid var(--gc); display:flex; align-items:center; gap:.7rem;}
+.card-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:.9rem;}
+.card{display:flex; flex-direction:column; gap:.35rem; text-decoration:none; color:var(--ink);
+  background:var(--white); border:1px solid var(--line); border-left:4px solid var(--gc);
+  border-radius:4px; padding:1rem 1.1rem; transition:transform .14s ease,box-shadow .14s ease; position:relative;}
+.card:hover{transform:translateY(-3px); box-shadow:0 8px 20px var(--shadow);}
+.card-num{font-family:var(--ff-mono); font-size:.78rem; font-weight:600; color:var(--gc); letter-spacing:.08em;}
+.card-title{font-weight:600; font-size:1.02rem; line-height:1.25;}
+.card-sub{font-family:var(--ff-mono); font-size:.74rem; color:var(--ink-soft); line-height:1.45;}
+
+.hero{position:relative; border:1px solid var(--line); background:var(--ink); color:var(--paper);
+  border-radius:6px; padding:3rem 2.4rem 2.6rem; margin:2.4rem 0 3rem; overflow:hidden;}
+.hero::before{content:""; position:absolute; inset:0;
+  background-image:linear-gradient(rgba(244,240,230,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(244,240,230,.06) 1px,transparent 1px);
+  background-size:26px 26px; pointer-events:none;}
+.hero .kicker{font-family:var(--ff-mono); font-size:.8rem; letter-spacing:.2em; text-transform:uppercase; color:var(--accent); margin:0 0 .8rem; position:relative;}
+.hero h1{font-family:var(--ff-display); font-weight:600; font-size:clamp(2.1rem,6vw,3.6rem); line-height:1.04; margin:0 0 1rem; letter-spacing:-.02em; position:relative; color:var(--white);}
+.hero h1 em{font-style:italic; color:var(--accent);}
+.hero p{max-width:58ch; color:#cdd6e2; position:relative; margin:0; font-size:1.06rem;}
+.hero .meta{display:flex; gap:1.6rem; flex-wrap:wrap; margin-top:1.6rem; position:relative; font-family:var(--ff-mono); font-size:.82rem; color:#9fb0c4;}
+.hero .meta b{color:var(--white);}
+.hero svg.motif{position:absolute; right:-10px; top:-10px; opacity:.5;}
+
+.site-foot{margin-top:3rem; padding-top:1.4rem; border-top:1px solid var(--line);
+  font-family:var(--ff-mono); font-size:.76rem; color:var(--ink-soft); display:flex; justify-content:space-between; flex-wrap:wrap; gap:.6rem;}
+
+@media (max-width:600px){body{font-size:16px;} .wrap{padding:1.8rem 1.1rem 4rem;} h2{font-size:1.35rem;}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;} *{animation:none !important; transition:none !important;}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="home-link" href="reseni-prikladu.html"><span class="arrow">←</span> Řešené příklady</a>
+  <span class="crumb">Řešené příklady / <b>Dualita úloh LP</b></span>
+</header>
+
+<main class="wrap">
+
+  <div class="topic-head">
+    <p class="eyebrow">Řešený příklad Ř04</p>
+    <h1>Dualita úloh LP</h1>
+    <p class="lede">Ke&nbsp;každé úloze LP existuje úloha duální. Ukážeme, jak ji sestavit,
+    a&nbsp;na&nbsp;čtyřech příkladech ověříme <strong>větu o&nbsp;dualitě</strong> — včetně mezních
+    případů, kdy úloha nemá řešení.</p>
+  </div>
+
+  <div class="box def">
+    <span class="tag">Připomenutí — jak vzniká duál</span>
+    <p>Primární úloha <span class="mono">min cᵀx</span>, <span class="mono">Ax = b</span> (resp. <span class="mono">≥ b</span>),
+    <span class="mono">x ≥ 0</span>. Duální úloha má pro&nbsp;<strong>každou rovnici</strong> primáru jednu proměnnou
+    a&nbsp;pro&nbsp;<strong>každou proměnnou</strong> primáru jednu nerovnici:</p>
+    <div class="formula center">primár  min cᵀx,  Ax = b,  x ≥ 0
+duál   max bᵀy,  Aᵀy ≤ c,  y ∈ ℝ  (volné, protože rovnice)</div>
+    <p>Rovnice v&nbsp;primáru ⇒ volná duální proměnná; nerovnice <span class="mono">≥</span> ⇒ <span class="mono">y ≥ 0</span>.</p>
+  </div>
+
+  <div class="box thm">
+    <span class="tag">Věta o dualitě</span>
+    <p><strong>Slabá:</strong> pro&nbsp;každé přípustné <span class="mono">x</span> (primár) a&nbsp;<span class="mono">y</span> (duál)
+    platí <span class="mono">cᵀx ≥ bᵀy</span>.<br>
+    <strong>Silná:</strong> má-li jedna úloha optimum, má je i&nbsp;druhá a&nbsp;<strong>ceny se rovnají</strong>.<br>
+    Důsledek pro&nbsp;mezní případy: je-li primár <strong>neomezený</strong>, je duál <strong>nepřípustný</strong>
+    (prázdná množina) — a&nbsp;naopak.</p>
+  </div>
+
+  <!-- ================= DUALITA 1 ================= -->
+  <h2><span class="num">1</span> Dualita 1 — rovnostní omezení</h2>
+
+  <h3>Příklad 1.1 &mdash; obě úlohy mají optimum</h3>
+  <div class="formula">Primár:   min x + y
+          2x + y − z = 2
+          x, y, z ≥ 0</div>
+  <p>Není vidět výchozí PBR, ale soustava je jednoduchá — řešíme přímo simplexem.
+  Matice (řádek účelové funkce <span class="mono">−c</span>, pod ním omezení):</p>
+
+  <div class="tableau-wrap"><table class="tableau">
+    <thead><tr><th>x</th><th>y</th><th>z</th><th class="rhs">b</th></tr></thead>
+    <tbody>
+      <tr class="obj"><td>−1</td><td>−1</td><td>0</td><td class="rhs">0</td></tr>
+      <tr><td class="piv">2</td><td>1</td><td>−1</td><td class="rhs">2</td></tr>
+    </tbody></table></div>
+  <p class="tcap">Do báze vstupuje x (pivot 2). Řádek vydělíme dvěma a&nbsp;vynulujeme rel. cenu x.</p>
+
+  <div class="tableau-wrap"><table class="tableau">
+    <thead><tr><th>x</th><th>y</th><th>z</th><th class="rhs">b</th></tr></thead>
+    <tbody>
+      <tr class="obj"><td>0</td><td>−½</td><td>−½</td><td class="rhs">1</td></tr>
+      <tr><td>1</td><td>½</td><td>−½</td><td class="rhs">1</td></tr>
+    </tbody></table></div>
+  <p class="tcap">Všechny relativní ceny ≤ 0 → optimum. Bázická x&nbsp;=&nbsp;1, nebázické y&nbsp;=&nbsp;z&nbsp;=&nbsp;0.</p>
+
+  <div class="result">
+    <span class="tag">Primár — optimum</span>
+    <p><span class="mono">x = 1, y = 0, z = 0</span>, cena <span class="mono">x + y = 1</span>.</p>
+  </div>
+
+  <p><strong>Sestavení duálu.</strong> Jedna rovnice ⇒ jedna volná proměnná <span class="mono">y</span>.
+  Každá primární proměnná dá jednu nerovnici (sloupec <span class="mono">Aᵀ</span> ≤ příslušná cena):</p>
+  <div class="formula">x:  2y ≤ 1
+y:   y ≤ 1
+z:  −y ≤ 0
+────────────────
+Duál:  max 2y,   0 ≤ y ≤ ½</div>
+  <p>Maximum <span class="mono">2y</span> na&nbsp;<span class="mono">[0, ½]</span> nastane v&nbsp;<span class="mono">y = ½</span>,
+  cena <span class="mono">2·½ = 1</span>.</p>
+
+  <div class="result">
+    <span class="tag">Ověření duality</span>
+    <p>Cena primáru = cena duálu = <span class="mono">1</span>. ✓ Silná dualita platí.</p>
+  </div>
+
+  <h3>Příklad 1.2 &mdash; neomezený primár, prázdný duál</h3>
+  <p>Stejná množina přípustných řešení, jen jiná cena:</p>
+  <div class="formula">Primár:   min x − y
+          2x + y − z = 2
+          x, y, z ≥ 0</div>
+
+  <div class="tableau-wrap"><table class="tableau">
+    <thead><tr><th>x</th><th>y</th><th>z</th><th class="rhs">b</th></tr></thead>
+    <tbody>
+      <tr class="obj"><td>−1</td><td>1</td><td>0</td><td class="rhs">0</td></tr>
+      <tr><td>2</td><td>1</td><td>−1</td><td class="rhs">2</td></tr>
+    </tbody></table></div>
+  <p>Do&nbsp;báze má jít <span class="mono">z</span> (kladná relativní cena +1), ale ve&nbsp;sloupci z&nbsp;je jediný
+  prvek <span class="mono">−1 &lt; 0</span> — poměrový test selže, žádná mez. Cenu lze zmenšovat
+  donekonečna:</p>
+  <div class="result">
+    <span class="tag">Primár — neomezený</span>
+    <p>Cenová funkce není zdola omezená na&nbsp;množině přípustných řešení.</p>
+  </div>
+
+  <p>Duál podle stejného receptu:</p>
+  <div class="formula">x:  2y ≤ 1
+y:   y ≤ −1
+z:  −y ≤ 0   (tj. y ≥ 0)
+────────────────
+Duál:  max 2y,   0 ≤ y ≤ −1   ← spor</div>
+  <div class="box note">
+    <span class="tag">Pointa</span>
+    <p>Podmínka <span class="mono">0 ≤ y ≤ −1</span> je nesplnitelná → <strong>duál je prázdný</strong>.
+    To přesně odpovídá větě: <em>neomezený primár ⇔ nepřípustný duál.</em></p>
+  </div>
+
+  <!-- ================= DUALITA 2 ================= -->
+  <h2><span class="num">2</span> Dualita 2 — nerovnostní omezení</h2>
+
+  <h3>Příklad 2.1 &mdash; obě úlohy mají optimum</h3>
+  <div class="formula">Primár:   min x + y + 2z
+          x + y + z ≥ 1
+          x + 4z ≥ 2
+          x, y, z ≥ 0</div>
+  <p>Převedeme na&nbsp;standardní tvar (odečteme přebytkové proměnné <span class="mono">s₁, s₂</span>),
+  najdeme výchozí PBR a&nbsp;simplexem dojdeme k&nbsp;optimu. Klíčové mezikroky:</p>
+  <ul>
+    <li>Výchozí PBR <span class="mono">(0, ½, ½, 0, 0)</span> má cenu <span class="mono">3/2</span> — není optimální.</li>
+    <li>Do&nbsp;báze vstoupí <span class="mono">x</span>, odejde <span class="mono">y</span>.</li>
+  </ul>
+  <div class="result">
+    <span class="tag">Primár — optimum</span>
+    <p><span class="mono">x = 2/3, y = 0, z = 1/3</span>, cena <span class="mono">2/3 + 0 + 2·(1/3) = 4/3</span>.</p>
+  </div>
+
+  <p><strong>Duál.</strong> Dvě nerovnice <span class="mono">≥</span> ⇒ dvě nezáporné proměnné <span class="mono">u, v</span>:</p>
+  <div class="formula">x:  u + v ≤ 1
+y:  u      ≤ 1
+z:  u + 4v ≤ 2
+────────────────
+Duál:  max u + 2v,   u, v ≥ 0</div>
+  <p>Tato úloha má hned vidět výchozí PBR (pomocné proměnné), optimalizací dostaneme:</p>
+  <div class="result">
+    <span class="tag">Duál — optimum</span>
+    <p><span class="mono">u = 2/3, v = 1/3</span>, cena <span class="mono">u + 2v = 2/3 + 2/3 = 4/3</span>.<br>
+    Kontrola: <span class="mono">u+v = 1</span> (těsně), <span class="mono">u+4v = 2</span> (těsně).</p>
+  </div>
+  <div class="result">
+    <span class="tag">Ověření duality</span>
+    <p>Cena primáru = cena duálu = <span class="mono">4/3</span>. ✓</p>
+  </div>
+
+  <h3>Příklad 2.2 &mdash; neomezený primár, prázdný duál</h3>
+  <div class="formula">Primár:   min x − y
+          x + y + z ≥ 1
+          x + 4z ≥ 2
+          x, y, z ≥ 0</div>
+  <p>Proměnnou <span class="mono">y</span> lze zvětšovat libovolně (omezení <span class="mono">≥</span> přitom zůstávají
+  splněna), takže <span class="mono">x − y → −∞</span>:</p>
+  <div class="result">
+    <span class="tag">Primár — neomezený</span>
+    <p>Množina přípustných řešení není omezená v&nbsp;kladném směru osy y, cena není zdola omezená.</p>
+  </div>
+  <div class="formula">Duál:  max u + 2v
+       u + v ≤ 1
+       u      ≤ −1
+       u + 4v ≤ 0
+       u, v ≥ 0      →  0 ≤ u ≤ −1   ← spor</div>
+  <div class="box note">
+    <span class="tag">Pointa</span>
+    <p>Opět <strong>prázdný duál</strong> (z&nbsp;<span class="mono">u ≤ −1</span> a&nbsp;<span class="mono">u ≥ 0</span>),
+    což odpovídá neomezenému primáru.</p>
+  </div>
+
+  <div class="exam-points">
+    <h3>Na co dát pozor</h3>
+    <ul>
+      <li><strong>Recept na duál:</strong> rovnice → volná proměnná, nerovnice <span class="mono">≥</span> → proměnná <span class="mono">≥ 0</span>;
+      počet duálních proměnných = počet primárních omezení.</li>
+      <li>Sloupce matice <span class="mono">A</span> se v&nbsp;duálu stávají <strong>řádky</strong> (<span class="mono">Aᵀ</span>),
+      pravé strany a&nbsp;ceny si <strong>vymění role</strong>.</li>
+      <li><strong>Silná dualita:</strong> mají-li obě úlohy optimum, jejich ceny se rovnají — užitečná <em>kontrola výpočtu</em>.</li>
+      <li>Mezní případy: <strong>neomezený</strong> primár ⇔ <strong>nepřípustný</strong> duál. Pozor: prázdný primár nemusí znamenat neomezený duál (může být taky prázdný).</li>
+      <li><strong>Komplementarita:</strong> v&nbsp;optimu jsou těsné právě ty duální nerovnice, jejichž primární proměnná je kladná (viz <span class="mono">u+v=1</span>, <span class="mono">u+4v=2</span> u&nbsp;2.1).</li>
+    </ul>
+  </div>
+
+  <nav class="pager">
+    <a class="prev" href="reseni-rozvoz.html"><span class="dir">← předchozí</span><span class="ttl">Optimální rozvoz</span></a>
+    <a class="next" href="reseni-parovani.html"><span class="dir">další →</span><span class="ttl">Párování &amp; generická hodnost</span></a>
+  </nav>
+
+</main>
+</body>
+</html>

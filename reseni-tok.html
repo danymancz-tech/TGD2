@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Řešený příklad — Optimální tok (potenciály)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#14233b; --ink-soft:#38506e; --paper:#f4f0e6; --paper-2:#ece6d6;
+  --line:#c9bfa8; --line-soft:#ddd5c2; --accent:#c2543a; --accent-2:#2f7d6f;
+  --gold:#b8893b; --white:#fbf9f3; --shadow:rgba(20,35,59,0.10);
+  --ff-display:'Fraunces',Georgia,serif; --ff-body:'Inter',system-ui,sans-serif;
+  --ff-mono:'Spline Sans Mono',ui-monospace,monospace; --maxw:880px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; font-family:var(--ff-body); color:var(--ink); background-color:var(--paper);
+  background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+  background-size:28px 28px; background-position:-1px -1px;
+  line-height:1.62; font-size:17px; -webkit-font-smoothing:antialiased;
+}
+.topbar{position:sticky; top:0; z-index:50; display:flex; align-items:center;
+  justify-content:space-between; gap:1rem; padding:.7rem 1.4rem;
+  background:rgba(244,240,230,.86); backdrop-filter:blur(8px); border-bottom:1px solid var(--line);}
+.topbar .home-link{font-family:var(--ff-mono); font-size:.82rem; letter-spacing:.04em;
+  text-transform:uppercase; color:var(--ink-soft); text-decoration:none; display:inline-flex;
+  align-items:center; gap:.5rem; transition:color .15s;}
+.topbar .home-link:hover{color:var(--accent);}
+.topbar .home-link .arrow{font-size:1rem;}
+.topbar .crumb{font-family:var(--ff-mono); font-size:.78rem; color:var(--ink-soft); letter-spacing:.02em;}
+.topbar .crumb b{color:var(--ink);}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:2.6rem 1.4rem 5rem;}
+
+.topic-head{border-left:4px solid var(--accent); padding-left:1.3rem; margin-bottom:2.4rem;}
+.topic-head .eyebrow{font-family:var(--ff-mono); font-size:.78rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin:0 0 .5rem;}
+.topic-head h1{font-family:var(--ff-display); font-weight:600; font-size:clamp(1.9rem,5vw,2.9rem);
+  line-height:1.08; margin:0 0 .6rem; letter-spacing:-.01em;}
+.topic-head .lede{font-size:1.05rem; color:var(--ink-soft); max-width:60ch; margin:0;}
+
+h2{font-family:var(--ff-display); font-weight:600; font-size:1.55rem; margin:2.8rem 0 .9rem;
+  letter-spacing:-.01em; display:flex; align-items:baseline; gap:.7rem;}
+h2 .num{font-family:var(--ff-mono); font-size:.85rem; color:var(--accent); font-weight:600; letter-spacing:.05em;}
+h3{font-family:var(--ff-body); font-weight:700; font-size:1.12rem; margin:1.9rem 0 .6rem; color:var(--ink);}
+p{margin:.7rem 0;} ul,ol{margin:.7rem 0; padding-left:1.4rem;} li{margin:.35rem 0;}
+strong{font-weight:600;} a{color:var(--accent);}
+.mono{font-family:var(--ff-mono); font-size:.92em;}
+
+.box{border:1px solid var(--line); background:var(--white); border-radius:3px;
+  padding:1.1rem 1.3rem; margin:1.4rem 0; position:relative; box-shadow:0 1px 0 var(--shadow);}
+.box .tag{font-family:var(--ff-mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+  font-weight:600; display:inline-block; margin-bottom:.45rem; padding:.12rem .5rem; border-radius:2px;}
+.box.def{border-left:4px solid var(--ink);} .box.def .tag{background:var(--ink); color:var(--paper);}
+.box.thm{border-left:4px solid var(--accent);} .box.thm .tag{background:var(--accent); color:var(--white);}
+.box.algo{border-left:4px solid var(--accent-2); background:#f3f6f2;} .box.algo .tag{background:var(--accent-2); color:var(--white);}
+.box.note{border-left:4px solid var(--gold); background:#faf6ec;} .box.note .tag{background:var(--gold); color:var(--white);}
+.box.key{border:1px solid var(--accent); background:#fbf1ee;} .box.key .tag{background:var(--accent); color:var(--white);}
+.box p:first-of-type{margin-top:0;} .box p:last-child{margin-bottom:0;}
+
+.formula{font-family:var(--ff-mono); background:var(--paper-2); border:1px solid var(--line-soft);
+  border-radius:3px; padding:.85rem 1.1rem; margin:1rem 0; overflow-x:auto; font-size:.95rem;
+  line-height:1.7; color:var(--ink); white-space:pre-wrap;}
+.formula.center{text-align:center;}
+code,.ic{font-family:var(--ff-mono); background:var(--paper-2); padding:.08em .38em; border-radius:3px; font-size:.88em;}
+
+figure{margin:1.6rem 0; text-align:center;}
+figure svg{max-width:100%; height:auto; background:var(--white); border:1px solid var(--line);
+  border-radius:4px; padding:.8rem; box-shadow:0 2px 8px var(--shadow);}
+figcaption{font-family:var(--ff-mono); font-size:.78rem; color:var(--ink-soft); margin-top:.6rem; letter-spacing:.01em;}
+.g-node{fill:var(--white); stroke:var(--ink); stroke-width:2;}
+.g-node-hl{fill:var(--accent); stroke:var(--ink); stroke-width:2;}
+.g-node-2{fill:var(--accent-2); stroke:var(--ink); stroke-width:2;}
+.g-edge{stroke:var(--ink-soft); stroke-width:2; fill:none;}
+.g-edge-hl{stroke:var(--accent); stroke-width:3.2; fill:none;}
+.g-edge-2{stroke:var(--accent-2); stroke-width:3.2; fill:none;}
+.g-edge-dash{stroke:var(--ink-soft); stroke-width:2; fill:none; stroke-dasharray:3 4;}
+.g-label{font-family:var(--ff-mono); font-size:13px; fill:var(--ink);}
+.g-nlabel{font-family:var(--ff-mono); font-size:13px; fill:var(--ink); font-weight:600;}
+.g-elabel{font-family:var(--ff-mono); font-size:12px; fill:var(--accent);}
+.g-cap{font-family:var(--ff-mono); font-size:12px; fill:var(--ink-soft);}
+.g-elabel-2{font-family:var(--ff-mono); font-size:12px; fill:var(--accent-2);}
+
+table{width:100%; border-collapse:collapse; margin:1.3rem 0; font-size:.95rem;}
+th,td{border:1px solid var(--line); padding:.5rem .7rem; text-align:left;}
+th{background:var(--ink); color:var(--paper); font-weight:600; font-family:var(--ff-body); font-size:.86rem; letter-spacing:.02em;}
+tbody tr:nth-child(even){background:var(--paper-2);}
+td.mono,th.mono{font-family:var(--ff-mono);}
+
+/* --- simplexové / maticové tabló --- */
+.tableau-wrap{overflow-x:auto; margin:1.1rem 0;}
+table.tableau{width:auto; min-width:60%; font-family:var(--ff-mono); font-size:.9rem; margin:0;}
+table.tableau td,table.tableau th{text-align:center; padding:.3rem .55rem; border:1px solid var(--line-soft);}
+table.tableau thead th{background:var(--paper-2); color:var(--ink-soft); font-weight:600; font-size:.78rem; border-bottom:1px solid var(--line);}
+table.tableau tbody tr:nth-child(even){background:transparent;}
+table.tableau .obj td{background:#fbf1ee; border-bottom:2px solid var(--accent);}
+table.tableau .rhs{border-left:2px solid var(--line); font-weight:600; background:var(--paper-2);}
+table.tableau td.piv{background:var(--accent); color:var(--white); font-weight:700;}
+table.tableau td.col-in{background:#f3f6f2;}
+.tcap{font-family:var(--ff-mono); font-size:.76rem; color:var(--ink-soft); margin:.2rem 0 1rem;}
+
+/* --- krokové řešení --- */
+.steps{counter-reset:step; list-style:none; padding-left:0; margin:1.4rem 0;}
+.steps>li{position:relative; padding-left:2.6rem; margin:1.1rem 0;}
+.steps>li::before{counter-increment:step; content:counter(step); position:absolute; left:0; top:.05rem;
+  width:1.7rem; height:1.7rem; border-radius:50%; background:var(--ink); color:var(--paper);
+  font-family:var(--ff-mono); font-size:.82rem; font-weight:600; display:flex; align-items:center; justify-content:center;}
+.steps>li>.st-h{font-weight:700; display:block; margin-bottom:.15rem;}
+
+.legend{display:flex; flex-wrap:wrap; gap:1rem 1.6rem; font-family:var(--ff-mono); font-size:.78rem;
+  color:var(--ink-soft); margin:.4rem 0 1rem; padding:.7rem 1rem; background:var(--white);
+  border:1px solid var(--line-soft); border-radius:4px;}
+.legend span{display:inline-flex; align-items:center; gap:.5rem;}
+.legend .sw{width:22px; height:0; border-top-width:3px; border-top-style:solid; display:inline-block;}
+.legend .dot{width:13px; height:13px; border-radius:50%; display:inline-block; border:2px solid var(--ink);}
+
+.result{border:1px solid var(--accent); background:#fbf1ee; border-radius:4px; padding:1rem 1.2rem; margin:1.4rem 0;}
+.result .tag{font-family:var(--ff-mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+  font-weight:600; color:var(--accent); display:block; margin-bottom:.3rem;}
+
+.exam-points{background:var(--ink); color:var(--paper); border-radius:4px; padding:1.4rem 1.6rem; margin:2.4rem 0 1rem;}
+.exam-points h3{color:var(--white); margin-top:0; font-family:var(--ff-mono); font-size:.8rem; letter-spacing:.14em; text-transform:uppercase;}
+.exam-points ul{list-style:none; padding-left:0;}
+.exam-points li{padding-left:1.6rem; position:relative; color:var(--paper);}
+.exam-points li::before{content:"\25B8"; position:absolute; left:.2rem; color:var(--accent);}
+.exam-points strong{color:var(--white);}
+
+.pager{display:flex; justify-content:space-between; gap:1rem; margin-top:3.5rem; padding-top:1.6rem; border-top:1px solid var(--line);}
+.pager a{text-decoration:none; color:var(--ink); font-family:var(--ff-mono); font-size:.82rem;
+  display:flex; flex-direction:column; gap:.2rem; max-width:45%; transition:color .15s;}
+.pager a:hover{color:var(--accent);}
+.pager a.next{text-align:right; align-items:flex-end;}
+.pager .dir{font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft);}
+.pager .ttl{font-weight:600;}
+.pager a.disabled{visibility:hidden;}
+
+/* --- rozcestník (karty) --- */
+.group{margin:2.6rem 0;}
+.group-head{font-family:var(--ff-display); font-weight:600; font-size:1.4rem; margin:0 0 1rem;
+  padding-left:.9rem; border-left:4px solid var(--gc); display:flex; align-items:center; gap:.7rem;}
+.card-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:.9rem;}
+.card{display:flex; flex-direction:column; gap:.35rem; text-decoration:none; color:var(--ink);
+  background:var(--white); border:1px solid var(--line); border-left:4px solid var(--gc);
+  border-radius:4px; padding:1rem 1.1rem; transition:transform .14s ease,box-shadow .14s ease; position:relative;}
+.card:hover{transform:translateY(-3px); box-shadow:0 8px 20px var(--shadow);}
+.card-num{font-family:var(--ff-mono); font-size:.78rem; font-weight:600; color:var(--gc); letter-spacing:.08em;}
+.card-title{font-weight:600; font-size:1.02rem; line-height:1.25;}
+.card-sub{font-family:var(--ff-mono); font-size:.74rem; color:var(--ink-soft); line-height:1.45;}
+
+.hero{position:relative; border:1px solid var(--line); background:var(--ink); color:var(--paper);
+  border-radius:6px; padding:3rem 2.4rem 2.6rem; margin:2.4rem 0 3rem; overflow:hidden;}
+.hero::before{content:""; position:absolute; inset:0;
+  background-image:linear-gradient(rgba(244,240,230,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(244,240,230,.06) 1px,transparent 1px);
+  background-size:26px 26px; pointer-events:none;}
+.hero .kicker{font-family:var(--ff-mono); font-size:.8rem; letter-spacing:.2em; text-transform:uppercase; color:var(--accent); margin:0 0 .8rem; position:relative;}
+.hero h1{font-family:var(--ff-display); font-weight:600; font-size:clamp(2.1rem,6vw,3.6rem); line-height:1.04; margin:0 0 1rem; letter-spacing:-.02em; position:relative; color:var(--white);}
+.hero h1 em{font-style:italic; color:var(--accent);}
+.hero p{max-width:58ch; color:#cdd6e2; position:relative; margin:0; font-size:1.06rem;}
+.hero .meta{display:flex; gap:1.6rem; flex-wrap:wrap; margin-top:1.6rem; position:relative; font-family:var(--ff-mono); font-size:.82rem; color:#9fb0c4;}
+.hero .meta b{color:var(--white);}
+.hero svg.motif{position:absolute; right:-10px; top:-10px; opacity:.5;}
+
+.site-foot{margin-top:3rem; padding-top:1.4rem; border-top:1px solid var(--line);
+  font-family:var(--ff-mono); font-size:.76rem; color:var(--ink-soft); display:flex; justify-content:space-between; flex-wrap:wrap; gap:.6rem;}
+
+@media (max-width:600px){body{font-size:16px;} .wrap{padding:1.8rem 1.1rem 4rem;} h2{font-size:1.35rem;}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;} *{animation:none !important; transition:none !important;}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="home-link" href="reseni-prikladu.html"><span class="arrow">←</span> Řešené příklady</a>
+  <span class="crumb">Řešené příklady / <b>Optimální tok</b></span>
+</header>
+
+<main class="wrap">
+
+  <div class="topic-head">
+    <p class="eyebrow">Řešený příklad Ř01</p>
+    <h1>Optimální tok metodou potenciálů</h1>
+    <p class="lede">Najdeme nejlevnější přípustný tok v&nbsp;síti se&nbsp;třemi uzly. Stejnou síť pak vyřešíme
+    podruhé převodem na&nbsp;úlohu lineárního programování — výsledek musí vyjít stejně.</p>
+  </div>
+
+  <div class="box note">
+    <span class="tag">Značení hran</span>
+    <p>Každá hrana je popsána ve&nbsp;tvaru <span class="mono">tok(cena, propustnost)</span>, tedy
+    <span class="mono">x(c, r)</span>. Cena je za&nbsp;jednotku toku, propustnost je horní mez. Cílem je
+    minimalizovat <span class="mono">Σ c·x</span> při&nbsp;dodržení bilancí v&nbsp;uzlech a&nbsp;mezí 0&nbsp;≤&nbsp;x&nbsp;≤&nbsp;r.</p>
+  </div>
+
+  <h2><span class="num">A</span> Zadání</h2>
+  <p>Síť má tři uzly s&nbsp;bilancemi <span class="mono">+10, −3, −7</span> (kladná = zdroj, záporná = spotřebič;
+  součet je&nbsp;0, síť je vyvážená) a&nbsp;tři hrany:</p>
+
+  <figure>
+    <svg viewBox="0 0 540 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Síť se třemi uzly">
+      <defs><marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#38506e"/></marker></defs>
+      <line class="g-edge" x1="80" y1="78" x2="80" y2="172" marker-end="url(#ah)"/>
+      <line class="g-edge" x1="98" y1="62" x2="438" y2="120" marker-end="url(#ah)"/>
+      <line class="g-edge" x1="98" y1="190" x2="438" y2="138" marker-end="url(#ah)"/>
+      <text class="g-elabel" x="92" y="128">x₁(3, 6)</text>
+      <text class="g-elabel" x="230" y="78">x₂(7, 6)</text>
+      <text class="g-elabel" x="230" y="182">x₃(3, 4)</text>
+      <circle class="g-node-hl" cx="80" cy="60" r="19"/>
+      <circle class="g-node" cx="80" cy="190" r="19"/>
+      <circle class="g-node" cx="460" cy="129" r="19"/>
+      <text class="g-nlabel" x="80" y="65" text-anchor="middle" fill="#fff">+10</text>
+      <text class="g-nlabel" x="80" y="195" text-anchor="middle">−3</text>
+      <text class="g-nlabel" x="460" y="134" text-anchor="middle">−7</text>
+      <text class="g-cap" x="55" y="50">A</text>
+      <text class="g-cap" x="55" y="208">B</text>
+      <text class="g-cap" x="486" y="123">C</text>
+    </svg>
+    <figcaption>Hrany A→B, A→C, B→C. Bilanční rovnice: x₁+x₂=10, x₁−x₃=3, x₂+x₃=7.</figcaption>
+  </figure>
+
+  <h2><span class="num">B</span> Metoda potenciálů</h2>
+
+  <div class="legend">
+    <span><span class="sw" style="border-top-color:#c2543a"></span> hrana opory</span>
+    <span><span class="sw" style="border-top-color:#2f7d6f; border-top-style:dashed"></span> nasycená hrana</span>
+    <span><span class="sw" style="border-top-color:#38506e"></span> ostatní hrana</span>
+  </div>
+
+  <ol class="steps">
+    <li><span class="st-h">Výchozí přípustný tok</span>
+      Zvolíme libovolný přípustný tok, např. <span class="mono">x₁=4, x₂=6, x₃=1</span>.
+      Ověříme bilance: 4+6=10&nbsp;✓, 4−1=3&nbsp;✓, 6+1=7&nbsp;✓. Cena je
+      <span class="mono">3·4 + 7·6 + 3·1 = 57</span>. Hrana A→C je <strong>nasycená</strong> (x₂=6=r),
+      zbylé dvě hrany mají tok ostře uvnitř mezí — tvoří <strong>oporu</strong> (kostru sítě).</li>
+
+    <li><span class="st-h">Potenciály na opoře a kontrola optimality</span>
+      Položíme <span class="mono">u_A = 0</span> a podél hran opory dopočítáme potenciály tak, aby
+      <em>potenciál narostl po hraně přesně o&nbsp;její cenu</em>:
+      <div class="formula center">u_B = u_A + c(A→B) = 0 + 3 = 3      u_C = u_B + c(B→C) = 3 + 3 = 6</div>
+      Na neoporové (nasycené) hraně A→C teď spočítáme redukovanou cenu
+      <span class="mono">c̄ = c(A→C) − (u_C − u_A) = 7 − (6 − 0) = +1</span>.
+      U&nbsp;nasycené hrany žádá optimalita <span class="mono">c̄ ≤ 0</span>; tady je
+      <span class="mono">+1 &gt; 0</span> &rArr; <strong>spor</strong>. Hrana A→C je „příliš drahá“ — chceme po ní posílat méně.</li>
+  </ol>
+
+  <figure>
+    <svg viewBox="0 0 540 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Opora, potenciály a spor">
+      <defs><marker id="ah2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#c2543a"/></marker>
+      <marker id="ah2b" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#2f7d6f"/></marker></defs>
+      <line class="g-edge-hl" x1="80" y1="78" x2="80" y2="172" marker-end="url(#ah2)"/>
+      <line class="g-edge-2 g-edge-dash" x1="98" y1="62" x2="438" y2="120" marker-end="url(#ah2b)"/>
+      <line class="g-edge-hl" x1="98" y1="190" x2="438" y2="138" marker-end="url(#ah2)"/>
+      <text class="g-elabel" x="92" y="128">4(3,6)</text>
+      <text class="g-elabel-2" x="225" y="76">6(7,6) ⊗</text>
+      <text class="g-elabel" x="230" y="182">1(3,4)</text>
+      <text class="g-cap" x="250" y="108" fill="#c2543a">spor: c̄=+1</text>
+      <circle class="g-node-hl" cx="80" cy="60" r="19"/>
+      <circle class="g-node" cx="80" cy="190" r="19"/>
+      <circle class="g-node" cx="460" cy="129" r="19"/>
+      <text class="g-nlabel" x="80" y="65" text-anchor="middle" fill="#fff">+10</text>
+      <text class="g-nlabel" x="80" y="195" text-anchor="middle">−3</text>
+      <text class="g-nlabel" x="460" y="134" text-anchor="middle">−7</text>
+      <text class="g-cap" x="44" y="50">u=0</text>
+      <text class="g-cap" x="44" y="208">u=3</text>
+      <text class="g-cap" x="486" y="123">u=6</text>
+    </svg>
+    <figcaption>Opora (červeně) určí potenciály; nasycená hrana A→C (zeleně, ⊗) poruší optimalitu.</figcaption>
+  </figure>
+
+  <ol class="steps" start="3">
+    <li><span class="st-h">Zlepšující cyklus (ZRP)</span>
+      Tok z&nbsp;drahé přímé hrany <span class="mono">A→C</span> (cena&nbsp;7) odkloníme na&nbsp;levnější cestu
+      <span class="mono">A→B→C</span> (cena&nbsp;3+3=6) — úspora <span class="mono">1</span>&nbsp;na&nbsp;jednotku.
+      O&nbsp;kolik můžeme tok přesunout? Limituje nás rezerva podél cyklu:
+      <div class="formula center">Δ = min( r(A→B)−x₁,  r(B→C)−x₃,  x₂ ) = min(6−4, 4−1, 6) = 2</div>
+      Posuneme <span class="mono">Δ=2</span>: x₁ a&nbsp;x₃ vzrostou o&nbsp;2, x₂ klesne o&nbsp;2.</li>
+
+    <li><span class="st-h">Nový tok a kontrola</span>
+      Dostáváme <span class="mono">x₁=6, x₂=4, x₃=3</span> s&nbsp;cenou
+      <span class="mono">3·6 + 7·4 + 3·3 = 55</span> (ušetřili jsme 2 = Δ·1). Přepočítání potenciálů už
+      <strong>nedá spor</strong> &rArr; tok je optimální.</li>
+  </ol>
+
+  <figure>
+    <svg viewBox="0 0 540 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Optimální tok">
+      <defs><marker id="ah3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#38506e"/></marker></defs>
+      <line class="g-edge" x1="80" y1="78" x2="80" y2="172" marker-end="url(#ah3)"/>
+      <line class="g-edge" x1="98" y1="62" x2="438" y2="120" marker-end="url(#ah3)"/>
+      <line class="g-edge" x1="98" y1="190" x2="438" y2="138" marker-end="url(#ah3)"/>
+      <text class="g-elabel" x="92" y="128">6(3,6)</text>
+      <text class="g-elabel" x="230" y="78">4(7,6)</text>
+      <text class="g-elabel" x="230" y="182">3(3,4)</text>
+      <circle class="g-node-hl" cx="80" cy="60" r="19"/>
+      <circle class="g-node" cx="80" cy="190" r="19"/>
+      <circle class="g-node" cx="460" cy="129" r="19"/>
+      <text class="g-nlabel" x="80" y="65" text-anchor="middle" fill="#fff">+10</text>
+      <text class="g-nlabel" x="80" y="195" text-anchor="middle">−3</text>
+      <text class="g-nlabel" x="460" y="134" text-anchor="middle">−7</text>
+    </svg>
+    <figcaption>Optimální tok: x₁=6, x₂=4, x₃=3, cena 55.</figcaption>
+  </figure>
+
+  <h2><span class="num">C</span> Kontrola převodem na LP</h2>
+  <p>Tutéž síť lze zapsat jako úlohu LP: proměnné jsou toky po hranách, rovnice jsou bilance uzlů,
+  nerovnosti jsou propustnosti. Třetí bilanci vynecháme (je lineární kombinací zbylých dvou).</p>
+
+  <div class="formula">min  3x₁ + 7x₂ + 3x₃
+x₁ + x₂ = 10
+x₁ − x₃ = 3
+x₁ ≤ 6,  x₂ ≤ 6,  x₃ ≤ 4
+x₁, x₂, x₃ ≥ 0</div>
+
+  <p>Z&nbsp;rovnic plyne <span class="mono">x₂ = 10 − x₁</span> a&nbsp;<span class="mono">x₃ = x₁ − 3</span>, takže
+  cílová funkce závisí jen na&nbsp;x₁:</p>
+  <div class="formula center">3x₁ + 7(10−x₁) + 3(x₁−3) = −x₁ + 61   &rArr;   minimum při co největším x₁.</div>
+  <p>Meze dávají <span class="mono">x₁ ≤ 6</span> a&nbsp;<span class="mono">x₃ = x₁−3 ≤ 4 &rArr; x₁ ≤ 7</span>,
+  navíc <span class="mono">x₂ = 10−x₁ ≤ 6 &rArr; x₁ ≥ 4</span>. Největší přípustné je
+  <span class="mono">x₁ = 6</span>, tedy <span class="mono">x₂ = 4, x₃ = 3</span>.</p>
+
+  <div class="result">
+    <span class="tag">Výsledek</span>
+    Optimální tok <span class="mono">x₁ = 6, x₂ = 4, x₃ = 3</span> s&nbsp;cenou <strong>55</strong>.
+    Obě metody — potenciály i&nbsp;LP — dávají totéž.
+  </div>
+
+  <div class="exam-points">
+    <h3>Na co dát pozor</h3>
+    <ul>
+      <li>Potenciál <strong>roste po hraně o&nbsp;cenu</strong>; orientace hran je klíčová.</li>
+      <li>Optimalita: u&nbsp;<strong>nenasycené</strong> hrany žádáme c̄&nbsp;≥&nbsp;0, u&nbsp;<strong>nasycené</strong> c̄&nbsp;≤&nbsp;0, na opoře c̄&nbsp;=&nbsp;0.</li>
+      <li>Rezerva cyklu = nejmenší ze zbývajících kapacit „nahoru“ a&nbsp;toků „dolů“ podél cyklu.</li>
+      <li>Při převodu na LP vždy <strong>vypustíme jednu bilanci</strong> (jsou lineárně závislé).</li>
+    </ul>
+  </div>
+
+  <nav class="pager">
+    <a class="prev disabled" href="#"><span class="dir">←</span><span class="ttl"></span></a>
+    <a class="next" href="reseni-simplex.html"><span class="dir">další →</span><span class="ttl">Simplex, dvoufázová, degenerace</span></a>
+  </nav>
+
+</main>
+</body>
+</html>

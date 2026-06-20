@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dobré charakteristiky a dobře charakterizované problémy — TGD2</title>
+<style>
+/* ============================================================
+   TGD2 — Studijní materiály
+   Vizuální směr: "matematický zápisník / rýsovací plátno"
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --ink:        #14233b;   /* hluboká inkoustová modř */
+  --ink-soft:   #38506e;
+  --paper:      #f4f0e6;   /* teplý papír */
+  --paper-2:    #ece6d6;
+  --line:       #c9bfa8;   /* rýsovací linka */
+  --line-soft:  #ddd5c2;
+  --accent:     #c2543a;   /* červený rumělkový akcent */
+  --accent-2:   #2f7d6f;   /* zelený, pro grafy/hrany */
+  --gold:       #b8893b;
+  --white:      #fbf9f3;
+  --shadow:     rgba(20, 35, 59, 0.10);
+
+  --ff-display: 'Fraunces', Georgia, serif;
+  --ff-body:    'Inter', system-ui, sans-serif;
+  --ff-mono:    'Spline Sans Mono', ui-monospace, monospace;
+
+  --maxw: 880px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--ff-body);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+  line-height: 1.62;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- vrchní lišta ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1.4rem;
+  background: rgba(244, 240, 230, 0.86);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar .home-link {
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.15s;
+}
+.topbar .home-link:hover { color: var(--accent); }
+.topbar .home-link .arrow { font-size: 1rem; }
+.topbar .crumb {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+.topbar .crumb b { color: var(--ink); }
+
+/* ---------- obal ---------- */
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 2.6rem 1.4rem 5rem;
+}
+
+/* ---------- hlavička tématu ---------- */
+.topic-head {
+  border-left: 4px solid var(--accent);
+  padding-left: 1.3rem;
+  margin-bottom: 2.4rem;
+}
+.topic-head .eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+.topic-head h1 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 5vw, 2.9rem);
+  line-height: 1.08;
+  margin: 0 0 0.6rem;
+  letter-spacing: -0.01em;
+}
+.topic-head .lede {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  max-width: 60ch;
+  margin: 0;
+}
+
+/* ---------- typografie obsahu ---------- */
+h2 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: 1.55rem;
+  margin: 2.8rem 0 0.9rem;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+h2 .num {
+  font-family: var(--ff-mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+h3 {
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: 1.12rem;
+  margin: 1.9rem 0 0.6rem;
+  color: var(--ink);
+}
+p { margin: 0.7rem 0; }
+ul, ol { margin: 0.7rem 0; padding-left: 1.4rem; }
+li { margin: 0.35rem 0; }
+strong { font-weight: 600; }
+a { color: var(--accent); }
+
+.mono { font-family: var(--ff-mono); font-size: 0.92em; }
+
+/* ---------- bloky: definice / věta / algoritmus / pozn ---------- */
+.box {
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 3px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.4rem 0;
+  position: relative;
+  box-shadow: 0 1px 0 var(--shadow);
+}
+.box .tag {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 2px;
+}
+.box.def     { border-left: 4px solid var(--ink); }
+.box.def     .tag { background: var(--ink); color: var(--paper); }
+.box.thm     { border-left: 4px solid var(--accent); }
+.box.thm     .tag { background: var(--accent); color: var(--white); }
+.box.algo    { border-left: 4px solid var(--accent-2); background: #f3f6f2; }
+.box.algo    .tag { background: var(--accent-2); color: var(--white); }
+.box.note    { border-left: 4px solid var(--gold); background: #faf6ec; }
+.box.note    .tag { background: var(--gold); color: var(--white); }
+.box.key     { border: 1px solid var(--accent); background: #fbf1ee; }
+.box.key     .tag { background: var(--accent); color: var(--white); }
+
+.box p:first-of-type { margin-top: 0; }
+.box p:last-child { margin-bottom: 0; }
+
+/* ---------- vzorce ---------- */
+.formula {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  padding: 0.85rem 1.1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.formula.center { text-align: center; }
+code, .ic {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  padding: 0.08em 0.38em;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+
+/* ---------- obrázky / grafy (SVG) ---------- */
+figure {
+  margin: 1.6rem 0;
+  text-align: center;
+}
+figure svg {
+  max-width: 100%;
+  height: auto;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.8rem;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+figcaption {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-top: 0.6rem;
+  letter-spacing: 0.01em;
+}
+
+/* SVG primitiva grafů */
+.g-node { fill: var(--white); stroke: var(--ink); stroke-width: 2; }
+.g-node-hl { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+.g-node-2 { fill: var(--accent-2); stroke: var(--ink); stroke-width: 2; }
+.g-edge { stroke: var(--ink-soft); stroke-width: 2; fill: none; }
+.g-edge-hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.g-edge-2 { stroke: var(--accent-2); stroke-width: 3.2; fill: none; }
+.g-label { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); }
+.g-nlabel { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); font-weight: 600; }
+.g-elabel { font-family: var(--ff-mono); font-size: 12px; fill: var(--accent); }
+.g-cap { font-family: var(--ff-mono); font-size: 12px; fill: var(--ink-soft); }
+
+/* ---------- tabulky ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.3rem 0;
+  font-size: 0.95rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+}
+th {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+  font-family: var(--ff-body);
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+}
+tbody tr:nth-child(even) { background: var(--paper-2); }
+td.mono, th.mono { font-family: var(--ff-mono); }
+
+/* ---------- "co umět ke zkoušce" ---------- */
+.exam-points {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 4px;
+  padding: 1.4rem 1.6rem;
+  margin: 2.4rem 0 1rem;
+}
+.exam-points h3 {
+  color: var(--white);
+  margin-top: 0;
+  font-family: var(--ff-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.exam-points ul { list-style: none; padding-left: 0; }
+.exam-points li {
+  padding-left: 1.6rem;
+  position: relative;
+  color: var(--paper);
+}
+.exam-points li::before {
+  content: "▸";
+  position: absolute;
+  left: 0.2rem;
+  color: var(--accent);
+}
+.exam-points strong { color: var(--white); }
+
+/* ---------- spodní navigace ---------- */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3.5rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
+}
+.pager a {
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 45%;
+  transition: color 0.15s;
+}
+.pager a:hover { color: var(--accent); }
+.pager a.next { text-align: right; align-items: flex-end; }
+.pager .dir { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.pager .ttl { font-weight: 600; }
+.pager a.disabled { visibility: hidden; }
+
+/* ---------- responsivita ---------- */
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .wrap { padding: 1.8rem 1.1rem 4rem; }
+  h2 { font-size: 1.35rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+</style>
+</head>
+<body><header class="topbar">
+  <a class="home-link" href="index.html"><span class="arrow">←</span> Rozcestník</a>
+  <div class="crumb">Otázka <b>15</b> / 15</div>
+</header><main class="wrap">
+<div class="topic-head">
+  <p class="eyebrow">Otázka 15 · Složitost</p>
+  <h1>Dobré charakteristiky a dobře charakterizované problémy</h1>
+  <p class="lede">Třída co-NP, pojem dobré charakteristiky (Edmonds): problém v NP ∩ co-NP.
+  Přehled, které věty z předmětu jsou (a nejsou) dobré charakteristiky.</p>
+</div>
+
+<h2><span class="num">15.1</span> Třída co-NP</h2>
+<div class="box def">
+  <span class="tag">Definice 3.1</span>
+  <p>Třída <strong>co-NP</strong> = všechny jazyky, jejichž <strong>doplněk</strong> patří do NP.
+  Problém je v co-NP ⟺ odpověď na <em>opačnou</em> otázku je v NP.</p>
+</div>
+<div class="box note">
+  <span class="tag">Příklady co-NP</span>
+  <ul>
+    <li><strong>HAM doplněk</strong> — zjistit, zda graf je <em>nehamiltonovský</em>.</li>
+    <li><strong>Prvočíselnost</strong> — k negativní odpovědi stačí napsat součin dvou čísel.</li>
+    <li><strong>Tuhost grafu</strong> — k důkazu „netuhý“ stačí ukázat <span class="ic">S</span> s mnoha komponentami.</li>
+  </ul>
+</div>
+
+<h2><span class="num">15.2</span> Dobrá charakteristika</h2>
+<div class="box def">
+  <span class="tag">Definice 3.2 — Edmonds</span>
+  <p>Jazyk <span class="ic">J</span> je <strong>dobře charakterizovaný</strong>, jestliže
+  <span class="ic">J ∈ NP ∩ co-NP</span>. Věta dokazující tuto příslušnost = <strong>dobrá charakteristika</strong>.</p>
+</div>
+<div class="box key">
+  <span class="tag">Intuice</span>
+  <p>Dobrá charakteristika = umíme <strong>pozitivním argumentem</strong> dokázat ANO i NE:</p>
+  <ul>
+    <li>ANO → předložíme „certifikát“ kladné odpovědi,</li>
+    <li>NE → předložíme „certifikát“ záporné odpovědi.</li>
+  </ul>
+  <p>Vyjadřuje „dobré pochopení“ problému.</p>
+</div>
+
+<figure>
+<svg viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NP, co-NP, P">
+  <ellipse cx="140" cy="110" rx="110" ry="85" fill="#c2543a18" stroke="#c2543a" stroke-width="2"/>
+  <ellipse cx="230" cy="110" rx="110" ry="85" fill="#2f7d6f18" stroke="#2f7d6f" stroke-width="2"/>
+  <ellipse cx="185" cy="110" rx="48" ry="48" fill="#14233b22" stroke="#14233b" stroke-width="2"/>
+  <text x="80" y="60" class="g-label" fill="#c2543a">NP</text>
+  <text x="290" y="60" class="g-label" fill="#2f7d6f">co-NP</text>
+  <text x="185" y="100" text-anchor="middle" class="g-label">P</text>
+  <text x="185" y="120" text-anchor="middle" class="g-cap">⊆ NP∩co-NP</text>
+  <text x="180" y="210" text-anchor="middle" class="g-cap">dobře charakterizované = NP ∩ co-NP</text>
+</svg>
+<figcaption>Věta 3.3: P ⊆ (NP ∩ co-NP). Dobré charakteristiky leží v průniku.</figcaption>
+</figure>
+
+<div class="box thm">
+  <span class="tag">Věta 3.3</span>
+  <p><span class="ic">P ⊆ (NP ∩ co-NP)</span>. Zda platí rovnost, je velký otevřený problém.</p>
+</div>
+
+<h2><span class="num">15.3</span> Příklady dobrých charakteristik</h2>
+<div class="box note">
+  <span class="tag">Mengerova věta</span>
+  <p>Graf je <span class="ic">k</span>-souvislý → ukážeme <span class="ic">k</span> disjunktních cest (NP).
+  Není → ukážeme řez &lt; <span class="ic">k</span> uzlů (co-NP). <strong>Je dobrá charakteristika.</strong></p>
+</div>
+<div class="box note">
+  <span class="tag">Hamiltonovskost — NENÍ</span>
+  <p>Hamiltonovský → ukážeme kružnici (NP). Nehamiltonovský → <strong>nevíme co hledat</strong>
+  (chybí věta pro co-NP). Dobrá charakteristika <strong>není známa</strong>.</p>
+</div>
+
+<h2><span class="num">15.4</span> Dualita LP a optimální tok</h2>
+<div class="box key">
+  <span class="tag">LP je dobře charakterizovaná</span>
+  <p>Úloha „je PBR <span class="ic">x₀</span> optimální?“:</p>
+  <ul>
+    <li>NE → najdeme lepší PBR (NP),</li>
+    <li>ANO → najdeme <span class="ic">y₀</span> duální úlohy s <span class="ic">cᵀx₀ = bᵀy₀</span> (co-NP).</li>
+  </ul>
+  <p>Tedy LP ∈ NP ∩ co-NP — viz <strong>silná věta o dualitě</strong> (otázka 07).</p>
+</div>
+<div class="box key">
+  <span class="tag">Optimální tok</span>
+  <p>Dobrou charakteristikou je <strong>věta o potenciálech (Věta 1.3)</strong>:</p>
+  <ul>
+    <li>tok není optimální → najdeme levnější tok,</li>
+    <li>tok je optimální → najdeme potenciály.</li>
+  </ul>
+  <p>Naproti tomu věta 1.1 (o ZRP) sama o sobě <strong>není</strong> dobrá charakteristika — váže neexistenci
+  lepšího toku s neexistencí ZRP. Praktickou použitelnost dává až Floydův algoritmus (rozhodne v polyn. čase).</p>
+</div>
+
+<h2><span class="num">15.5</span> Přehledová tabulka</h2>
+<table>
+  <thead><tr><th>Věta / problém</th><th>Dobrá charakteristika?</th></tr></thead>
+  <tbody>
+    <tr><td>Věta o potenciálech (1.3)</td><td>✔ ANO</td></tr>
+    <tr><td>Věta o ZRP (1.1)</td><td>✘ ne (sama o sobě)</td></tr>
+    <tr><td>Dualita LP (silná věta 3.2)</td><td>✔ ANO</td></tr>
+    <tr><td>Hallova věta (5.2)</td><td>✔ ANO</td></tr>
+    <tr><td>Bergeova věta o rozšiř. cestě (5.1)</td><td>✘ ne</td></tr>
+    <tr><td>Tutteova věta (5.4)</td><td>✔ ANO</td></tr>
+    <tr><td>Bergeova věta o deficienci (5.5)</td><td>✔ ANO</td></tr>
+    <tr><td>Kuratowského věta (7.2)</td><td>✔ ANO</td></tr>
+    <tr><td>Krausz (6.1)</td><td>✘ ne</td></tr>
+    <tr><td>Beineke (6.2)</td><td>✔ ANO (test O(n⁶))</td></tr>
+    <tr><td>Hamiltonovskost</td><td>? neznámo</td></tr>
+  </tbody>
+</table>
+
+<div class="box note">
+  <span class="tag">Historický význam</span>
+  <p>Nalezení dobré charakteristiky je často <strong>krokem k polynomiálnímu algoritmu</strong>.
+  LP a prvočíselnost byly „kandidáty na protipříklad“ k <span class="ic">P = NP∩co-NP</span> — obě se ale
+  ukázaly polynomiální (Chačijan 1979, AKS test prvočíselnosti 2002).</p>
+</div>
+
+<div class="exam-points">
+  <h3>Co umět ke zkoušce</h3>
+  <ul>
+    <li>Definici <strong>co-NP</strong> a <strong>dobré charakteristiky</strong> (NP ∩ co-NP) + Věta 3.3.</li>
+    <li>Intuici „pozitivní argument pro ANO i NE“; Menger ano × hamiltonovskost ne.</li>
+    <li>Proč jsou <strong>dualita LP</strong> a <strong>věta o potenciálech</strong> dobré charakteristiky.</li>
+    <li>Proč ZRP a Bergeova rozšiřující cesta <strong>nejsou</strong> dobré charakteristiky.</li>
+    <li>Přehledovou tabulku — propojuje celý předmět.</li>
+  </ul>
+</div>
+<nav class="pager"><a class="prev" href="tema-rovinne-grafy.html"><span class="dir">← Předchozí · 14</span><span class="ttl">Rovinné grafy a výpočetní složitost</span></a><a class="next disabled"></a></nav></main></body></html>

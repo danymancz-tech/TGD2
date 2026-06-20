@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Největší párování v bipartitním grafu — TGD2</title>
+<style>
+/* ============================================================
+   TGD2 — Studijní materiály
+   Vizuální směr: "matematický zápisník / rýsovací plátno"
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --ink:        #14233b;   /* hluboká inkoustová modř */
+  --ink-soft:   #38506e;
+  --paper:      #f4f0e6;   /* teplý papír */
+  --paper-2:    #ece6d6;
+  --line:       #c9bfa8;   /* rýsovací linka */
+  --line-soft:  #ddd5c2;
+  --accent:     #c2543a;   /* červený rumělkový akcent */
+  --accent-2:   #2f7d6f;   /* zelený, pro grafy/hrany */
+  --gold:       #b8893b;
+  --white:      #fbf9f3;
+  --shadow:     rgba(20, 35, 59, 0.10);
+
+  --ff-display: 'Fraunces', Georgia, serif;
+  --ff-body:    'Inter', system-ui, sans-serif;
+  --ff-mono:    'Spline Sans Mono', ui-monospace, monospace;
+
+  --maxw: 880px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--ff-body);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+  line-height: 1.62;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- vrchní lišta ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1.4rem;
+  background: rgba(244, 240, 230, 0.86);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar .home-link {
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.15s;
+}
+.topbar .home-link:hover { color: var(--accent); }
+.topbar .home-link .arrow { font-size: 1rem; }
+.topbar .crumb {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+.topbar .crumb b { color: var(--ink); }
+
+/* ---------- obal ---------- */
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 2.6rem 1.4rem 5rem;
+}
+
+/* ---------- hlavička tématu ---------- */
+.topic-head {
+  border-left: 4px solid var(--accent);
+  padding-left: 1.3rem;
+  margin-bottom: 2.4rem;
+}
+.topic-head .eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+.topic-head h1 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 5vw, 2.9rem);
+  line-height: 1.08;
+  margin: 0 0 0.6rem;
+  letter-spacing: -0.01em;
+}
+.topic-head .lede {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  max-width: 60ch;
+  margin: 0;
+}
+
+/* ---------- typografie obsahu ---------- */
+h2 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: 1.55rem;
+  margin: 2.8rem 0 0.9rem;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+h2 .num {
+  font-family: var(--ff-mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+h3 {
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: 1.12rem;
+  margin: 1.9rem 0 0.6rem;
+  color: var(--ink);
+}
+p { margin: 0.7rem 0; }
+ul, ol { margin: 0.7rem 0; padding-left: 1.4rem; }
+li { margin: 0.35rem 0; }
+strong { font-weight: 600; }
+a { color: var(--accent); }
+
+.mono { font-family: var(--ff-mono); font-size: 0.92em; }
+
+/* ---------- bloky: definice / věta / algoritmus / pozn ---------- */
+.box {
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 3px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.4rem 0;
+  position: relative;
+  box-shadow: 0 1px 0 var(--shadow);
+}
+.box .tag {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 2px;
+}
+.box.def     { border-left: 4px solid var(--ink); }
+.box.def     .tag { background: var(--ink); color: var(--paper); }
+.box.thm     { border-left: 4px solid var(--accent); }
+.box.thm     .tag { background: var(--accent); color: var(--white); }
+.box.algo    { border-left: 4px solid var(--accent-2); background: #f3f6f2; }
+.box.algo    .tag { background: var(--accent-2); color: var(--white); }
+.box.note    { border-left: 4px solid var(--gold); background: #faf6ec; }
+.box.note    .tag { background: var(--gold); color: var(--white); }
+.box.key     { border: 1px solid var(--accent); background: #fbf1ee; }
+.box.key     .tag { background: var(--accent); color: var(--white); }
+
+.box p:first-of-type { margin-top: 0; }
+.box p:last-child { margin-bottom: 0; }
+
+/* ---------- vzorce ---------- */
+.formula {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  padding: 0.85rem 1.1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.formula.center { text-align: center; }
+code, .ic {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  padding: 0.08em 0.38em;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+
+/* ---------- obrázky / grafy (SVG) ---------- */
+figure {
+  margin: 1.6rem 0;
+  text-align: center;
+}
+figure svg {
+  max-width: 100%;
+  height: auto;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.8rem;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+figcaption {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-top: 0.6rem;
+  letter-spacing: 0.01em;
+}
+
+/* SVG primitiva grafů */
+.g-node { fill: var(--white); stroke: var(--ink); stroke-width: 2; }
+.g-node-hl { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+.g-node-2 { fill: var(--accent-2); stroke: var(--ink); stroke-width: 2; }
+.g-edge { stroke: var(--ink-soft); stroke-width: 2; fill: none; }
+.g-edge-hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.g-edge-2 { stroke: var(--accent-2); stroke-width: 3.2; fill: none; }
+.g-label { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); }
+.g-nlabel { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); font-weight: 600; }
+.g-elabel { font-family: var(--ff-mono); font-size: 12px; fill: var(--accent); }
+.g-cap { font-family: var(--ff-mono); font-size: 12px; fill: var(--ink-soft); }
+
+/* ---------- tabulky ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.3rem 0;
+  font-size: 0.95rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+}
+th {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+  font-family: var(--ff-body);
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+}
+tbody tr:nth-child(even) { background: var(--paper-2); }
+td.mono, th.mono { font-family: var(--ff-mono); }
+
+/* ---------- "co umět ke zkoušce" ---------- */
+.exam-points {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 4px;
+  padding: 1.4rem 1.6rem;
+  margin: 2.4rem 0 1rem;
+}
+.exam-points h3 {
+  color: var(--white);
+  margin-top: 0;
+  font-family: var(--ff-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.exam-points ul { list-style: none; padding-left: 0; }
+.exam-points li {
+  padding-left: 1.6rem;
+  position: relative;
+  color: var(--paper);
+}
+.exam-points li::before {
+  content: "▸";
+  position: absolute;
+  left: 0.2rem;
+  color: var(--accent);
+}
+.exam-points strong { color: var(--white); }
+
+/* ---------- spodní navigace ---------- */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3.5rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
+}
+.pager a {
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 45%;
+  transition: color 0.15s;
+}
+.pager a:hover { color: var(--accent); }
+.pager a.next { text-align: right; align-items: flex-end; }
+.pager .dir { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.pager .ttl { font-weight: 600; }
+.pager a.disabled { visibility: hidden; }
+
+/* ---------- responsivita ---------- */
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .wrap { padding: 1.8rem 1.1rem 4rem; }
+  h2 { font-size: 1.35rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+</style>
+</head>
+<body><header class="topbar">
+  <a class="home-link" href="index.html"><span class="arrow">←</span> Rozcestník</a>
+  <div class="crumb">Otázka <b>08</b> / 15</div>
+</header><main class="wrap">
+<div class="topic-head">
+  <p class="eyebrow">Otázka 08 · Párování</p>
+  <h1>Největší párování v bipartitním grafu</h1>
+  <p class="lede">Rozšiřující cesty a Bergeova věta, Hallova věta (dobrá charakteristika)
+  a maďarská metoda hledající párování pokrývající množinu X.</p>
+</div>
+
+<h2><span class="num">8.1</span> Základní pojmy</h2>
+<div class="box def">
+  <span class="tag">Definice — párování</span>
+  <p><strong>Párování</strong> = pravidelný podgraf stupně 1. <strong>Perfektní párování</strong> =
+  pravidelný faktor stupně 1 (pokrývá všechny uzly). <strong>Největší párování</strong> = s nejvíce hranami.</p>
+</div>
+<div class="box note">
+  <span class="tag">maximální vs. největší</span>
+  <p><strong>Maximální</strong> (maximal) párování nelze rozšířit přidáním hrany — najde se hladově.
+  <strong>Největší</strong> (maximum) má nejvíce hran. Maximální nemusí být největší!</p>
+</div>
+
+<h2><span class="num">8.2</span> Rozšiřující cesty a Bergeova věta</h2>
+<div class="box def">
+  <span class="tag">Definice 5.3, 5.4</span>
+  <p><strong>M-alternující cesta</strong>: hrany střídavě jsou/nejsou v <span class="ic">M</span>.
+  <strong>M-rozšiřující cesta</strong>: alternující cesta, jejíž <strong>oba koncové uzly nejsou pokryty</strong>.</p>
+</div>
+
+<figure>
+<svg viewBox="0 0 420 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="M-rozšiřující cesta">
+  <line x1="40" y1="80" x2="120" y2="40" class="g-edge-hl"/>
+  <line x1="120" y1="40" x2="200" y2="80" class="g-edge" stroke-dasharray="2 3"/>
+  <line x1="200" y1="80" x2="280" y2="40" class="g-edge-hl"/>
+  <line x1="280" y1="40" x2="360" y2="80" class="g-edge" stroke-dasharray="2 3"/>
+  <circle cx="40" cy="80" r="13" class="g-node-hl"/>
+  <circle cx="120" cy="40" r="13" class="g-node"/>
+  <circle cx="200" cy="80" r="13" class="g-node"/>
+  <circle cx="280" cy="40" r="13" class="g-node"/>
+  <circle cx="360" cy="80" r="13" class="g-node-hl"/>
+  <text x="40" y="120" text-anchor="middle" class="g-cap">nepokrytý</text>
+  <text x="360" y="120" text-anchor="middle" class="g-cap">nepokrytý</text>
+  <text x="80" y="50" class="g-cap">M</text>
+  <text x="240" y="50" class="g-cap">M</text>
+  <text x="160" y="80" class="g-cap">o</text>
+  <text x="320" y="80" class="g-cap">o</text>
+  <text x="200" y="150" text-anchor="middle" class="g-cap">prohození M↔o → o hranu větší párování</text>
+</svg>
+<figcaption>M-rozšiřující cesta: prohozením hran zvětšíme párování o jednu hranu.</figcaption>
+</figure>
+
+<div class="box thm">
+  <span class="tag">Věta 5.1 — Berge (1957)</span>
+  <p>Párování <span class="ic">M</span> je <strong>největší</strong>, právě když v <span class="ic">G</span>
+  neexistuje M-rozšiřující cesta.</p>
+</div>
+<p><strong>Idea (←):</strong> Je-li <span class="ic">N</span> větší, symetrická diference
+<span class="ic">M △ N</span> tvoří cesty a sudé kružnice; protože <span class="ic">|N| &gt; |M|</span>,
+musí existovat liché cesta začínající i končící v <span class="ic">N</span> = M-rozšiřující cesta.</p>
+<div class="box note">
+  <span class="tag">Pozor</span>
+  <p>Bergeova věta <strong>není</strong> dobrá charakteristika (váže neexistenci většího párování
+  s neexistencí rozšiřující cesty).</p>
+</div>
+
+<h2><span class="num">8.3</span> Hallova věta</h2>
+<p>Pro <span class="ic">S ⊆ X</span> je <strong>okolí</strong> <span class="ic">N(S)</span> = uzly v Y sousedící s S.</p>
+<div class="box thm">
+  <span class="tag">Věta 5.2 — Hall (1935)</span>
+  <p>Bipartitní graf <span class="ic">G = (X, Y)</span> má párování pokrývající všechny uzly z <span class="ic">X</span>,
+  právě když pro každou <span class="ic">S ⊆ X</span> platí <span class="ic">|N(S)| ≥ |S|</span>.</p>
+</div>
+<div class="box key">
+  <span class="tag">Hall JE dobrá charakteristika</span>
+  <ul>
+    <li>existuje-li párování pokrývající X → najdeme ho,</li>
+    <li>neexistuje-li → najdeme „úzkou“ množinu <span class="ic">S</span> s <span class="ic">|N(S)| &lt; |S|</span>.</li>
+  </ul>
+  <p>Otázka existence je tedy v <strong>NP ∩ co-NP</strong>.</p>
+</div>
+
+<figure>
+<svg viewBox="0 0 360 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hallova podmínka porušena">
+  <!-- X nodes -->
+  <circle cx="80" cy="40" r="12" class="g-node-hl"/>
+  <circle cx="80" cy="100" r="12" class="g-node-hl"/>
+  <circle cx="80" cy="160" r="12" class="g-node-hl"/>
+  <!-- Y nodes -->
+  <circle cx="280" cy="70" r="12" class="g-node"/>
+  <circle cx="280" cy="130" r="12" class="g-node"/>
+  <line x1="92" y1="40" x2="268" y2="70" class="g-edge"/>
+  <line x1="92" y1="100" x2="268" y2="70" class="g-edge"/>
+  <line x1="92" y1="100" x2="268" y2="130" class="g-edge"/>
+  <line x1="92" y1="160" x2="268" y2="130" class="g-edge"/>
+  <text x="80" y="20" text-anchor="middle" class="g-cap">S (3 uzly)</text>
+  <text x="280" y="40" text-anchor="middle" class="g-cap">N(S) (2 uzly)</text>
+  <text x="180" y="195" text-anchor="middle" class="g-cap">|N(S)|=2 &lt; 3=|S| → párování pokrývající X neexistuje</text>
+</svg>
+<figcaption>Porušení Hallovy podmínky: úzká množina S brání pokrytí X.</figcaption>
+</figure>
+
+<h2><span class="num">8.4</span> Maďarská metoda</h2>
+<div class="box algo">
+  <span class="tag">Algoritmus (maďarská metoda)</span>
+  <ol>
+    <li>Zvol libovolné párování <span class="ic">M</span>.</li>
+    <li>Pokrývá-li <span class="ic">M</span> celé <span class="ic">X</span> → KONEC. Jinak najdi nepokrytý
+        <span class="ic">u ∈ X</span>, polož <span class="ic">S={u}, T=∅</span>.</li>
+    <li>Je-li <span class="ic">N(S)=T</span> → STOP, párování neexistuje (<span class="ic">|N(S)|&lt;|S|</span>).
+        Jinak vyber <span class="ic">y ∈ N(S)∖T</span>.</li>
+    <li>Je-li <span class="ic">y</span> pokrytý (spárovaný se <span class="ic">z</span>):
+        <span class="ic">S:=S∪{z}, T:=T∪{y}</span>, jdi na 3. Jinak najdi M-rozšiřující cestu
+        <span class="ic">u→y</span>, prohoď hrany, jdi na 2.</li>
+  </ol>
+</div>
+<div class="box note">
+  <span class="tag">Složitost</span>
+  <p>Maďarská metoda běží v <strong>O(n³)</strong> (smyčka 2 ≤ O(n)×, hledání cesty O(n²)).
+  Nejlepší známé postupy: <strong>O(m·√n)</strong> (i převodem na maximální tok / Dinic).</p>
+</div>
+
+<div class="exam-points">
+  <h3>Co umět ke zkoušce</h3>
+  <ul>
+    <li>Rozdíl <strong>maximální × největší</strong> párování.</li>
+    <li><strong>Bergeova věta 5.1</strong> + idea důkazu přes <span class="ic">M △ N</span>; není dobrá charakteristika.</li>
+    <li><strong>Hallova věta 5.2</strong> (<span class="ic">|N(S)| ≥ |S|</span>) — JE dobrá charakteristika.</li>
+    <li><strong>Maďarská metoda</strong>: celý algoritmus (smyčky S, T), složitost O(n³), lepší O(m√n).</li>
+  </ul>
+</div>
+<nav class="pager"><a class="prev" href="tema-lp-dualita.html"><span class="dir">← Předchozí · 07</span><span class="ttl">Lineární programování: dualita úloh</span></a><a class="next" href="tema-parovani-ohodnoc.html"><span class="dir">Další · 09 →</span><span class="ttl">Optimální párování v ohodnoceném bipartitním grafu</span></a></nav></main></body></html>

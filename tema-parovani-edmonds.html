@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Největší párování v obecném grafu: Edmondsův algoritmus — TGD2</title>
+<style>
+/* ============================================================
+   TGD2 — Studijní materiály
+   Vizuální směr: "matematický zápisník / rýsovací plátno"
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --ink:        #14233b;   /* hluboká inkoustová modř */
+  --ink-soft:   #38506e;
+  --paper:      #f4f0e6;   /* teplý papír */
+  --paper-2:    #ece6d6;
+  --line:       #c9bfa8;   /* rýsovací linka */
+  --line-soft:  #ddd5c2;
+  --accent:     #c2543a;   /* červený rumělkový akcent */
+  --accent-2:   #2f7d6f;   /* zelený, pro grafy/hrany */
+  --gold:       #b8893b;
+  --white:      #fbf9f3;
+  --shadow:     rgba(20, 35, 59, 0.10);
+
+  --ff-display: 'Fraunces', Georgia, serif;
+  --ff-body:    'Inter', system-ui, sans-serif;
+  --ff-mono:    'Spline Sans Mono', ui-monospace, monospace;
+
+  --maxw: 880px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--ff-body);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+  line-height: 1.62;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- vrchní lišta ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1.4rem;
+  background: rgba(244, 240, 230, 0.86);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar .home-link {
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.15s;
+}
+.topbar .home-link:hover { color: var(--accent); }
+.topbar .home-link .arrow { font-size: 1rem; }
+.topbar .crumb {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+.topbar .crumb b { color: var(--ink); }
+
+/* ---------- obal ---------- */
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 2.6rem 1.4rem 5rem;
+}
+
+/* ---------- hlavička tématu ---------- */
+.topic-head {
+  border-left: 4px solid var(--accent);
+  padding-left: 1.3rem;
+  margin-bottom: 2.4rem;
+}
+.topic-head .eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+.topic-head h1 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 5vw, 2.9rem);
+  line-height: 1.08;
+  margin: 0 0 0.6rem;
+  letter-spacing: -0.01em;
+}
+.topic-head .lede {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  max-width: 60ch;
+  margin: 0;
+}
+
+/* ---------- typografie obsahu ---------- */
+h2 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: 1.55rem;
+  margin: 2.8rem 0 0.9rem;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+h2 .num {
+  font-family: var(--ff-mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+h3 {
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: 1.12rem;
+  margin: 1.9rem 0 0.6rem;
+  color: var(--ink);
+}
+p { margin: 0.7rem 0; }
+ul, ol { margin: 0.7rem 0; padding-left: 1.4rem; }
+li { margin: 0.35rem 0; }
+strong { font-weight: 600; }
+a { color: var(--accent); }
+
+.mono { font-family: var(--ff-mono); font-size: 0.92em; }
+
+/* ---------- bloky: definice / věta / algoritmus / pozn ---------- */
+.box {
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 3px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.4rem 0;
+  position: relative;
+  box-shadow: 0 1px 0 var(--shadow);
+}
+.box .tag {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 2px;
+}
+.box.def     { border-left: 4px solid var(--ink); }
+.box.def     .tag { background: var(--ink); color: var(--paper); }
+.box.thm     { border-left: 4px solid var(--accent); }
+.box.thm     .tag { background: var(--accent); color: var(--white); }
+.box.algo    { border-left: 4px solid var(--accent-2); background: #f3f6f2; }
+.box.algo    .tag { background: var(--accent-2); color: var(--white); }
+.box.note    { border-left: 4px solid var(--gold); background: #faf6ec; }
+.box.note    .tag { background: var(--gold); color: var(--white); }
+.box.key     { border: 1px solid var(--accent); background: #fbf1ee; }
+.box.key     .tag { background: var(--accent); color: var(--white); }
+
+.box p:first-of-type { margin-top: 0; }
+.box p:last-child { margin-bottom: 0; }
+
+/* ---------- vzorce ---------- */
+.formula {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  padding: 0.85rem 1.1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.formula.center { text-align: center; }
+code, .ic {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  padding: 0.08em 0.38em;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+
+/* ---------- obrázky / grafy (SVG) ---------- */
+figure {
+  margin: 1.6rem 0;
+  text-align: center;
+}
+figure svg {
+  max-width: 100%;
+  height: auto;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.8rem;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+figcaption {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-top: 0.6rem;
+  letter-spacing: 0.01em;
+}
+
+/* SVG primitiva grafů */
+.g-node { fill: var(--white); stroke: var(--ink); stroke-width: 2; }
+.g-node-hl { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+.g-node-2 { fill: var(--accent-2); stroke: var(--ink); stroke-width: 2; }
+.g-edge { stroke: var(--ink-soft); stroke-width: 2; fill: none; }
+.g-edge-hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.g-edge-2 { stroke: var(--accent-2); stroke-width: 3.2; fill: none; }
+.g-label { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); }
+.g-nlabel { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); font-weight: 600; }
+.g-elabel { font-family: var(--ff-mono); font-size: 12px; fill: var(--accent); }
+.g-cap { font-family: var(--ff-mono); font-size: 12px; fill: var(--ink-soft); }
+
+/* ---------- tabulky ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.3rem 0;
+  font-size: 0.95rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+}
+th {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+  font-family: var(--ff-body);
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+}
+tbody tr:nth-child(even) { background: var(--paper-2); }
+td.mono, th.mono { font-family: var(--ff-mono); }
+
+/* ---------- "co umět ke zkoušce" ---------- */
+.exam-points {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 4px;
+  padding: 1.4rem 1.6rem;
+  margin: 2.4rem 0 1rem;
+}
+.exam-points h3 {
+  color: var(--white);
+  margin-top: 0;
+  font-family: var(--ff-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.exam-points ul { list-style: none; padding-left: 0; }
+.exam-points li {
+  padding-left: 1.6rem;
+  position: relative;
+  color: var(--paper);
+}
+.exam-points li::before {
+  content: "▸";
+  position: absolute;
+  left: 0.2rem;
+  color: var(--accent);
+}
+.exam-points strong { color: var(--white); }
+
+/* ---------- spodní navigace ---------- */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3.5rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
+}
+.pager a {
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 45%;
+  transition: color 0.15s;
+}
+.pager a:hover { color: var(--accent); }
+.pager a.next { text-align: right; align-items: flex-end; }
+.pager .dir { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.pager .ttl { font-weight: 600; }
+.pager a.disabled { visibility: hidden; }
+
+/* ---------- responsivita ---------- */
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .wrap { padding: 1.8rem 1.1rem 4rem; }
+  h2 { font-size: 1.35rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+</style>
+</head>
+<body><header class="topbar">
+  <a class="home-link" href="index.html"><span class="arrow">←</span> Rozcestník</a>
+  <div class="crumb">Otázka <b>11</b> / 15</div>
+</header><main class="wrap">
+<div class="topic-head">
+  <p class="eyebrow">Otázka 11 · Párování</p>
+  <h1>Edmondsův algoritmus</h1>
+  <p class="lede">Polynomiální algoritmus na největší párování v obecném grafu. Hlavní trik:
+  stahování lichých kružnic (květů) podle Lemmatu 5.1 a alternující les.</p>
+</div>
+
+<h2><span class="num">11.1</span> Základní idea</h2>
+<div class="box algo">
+  <span class="tag">Kostra algoritmu</span>
+  <ol>
+    <li>Zvol výchozí párování <span class="ic">M = (∅, ∅)</span>.</li>
+    <li>Hledej nepokrytý uzel <span class="ic">v</span>.</li>
+    <li>Hledej rozšiřující cestu začínající v <span class="ic">v</span>.</li>
+  </ol>
+  <p>Hlavní problém: <strong>vyhledávání rozšiřujících cest</strong> v nebipartitním grafu
+  (komplikují to liché kružnice).</p>
+</div>
+
+<h2><span class="num">11.2</span> Stahování kružnice (květu)</h2>
+<p><span class="ic">G|<sub>F</sub></span> = graf vzniklý <strong>stažením</strong> podgrafu <span class="ic">F</span>
+do jediného uzlu <span class="ic">x</span>.</p>
+<div class="box thm">
+  <span class="tag">Lemma 5.1 — klíčové</span>
+  <p>Nechť <span class="ic">C</span> je kružnice délky <span class="ic">2k+1</span> obsahující
+  <span class="ic">k</span> hran párování a 1 nepokrytý uzel. Pak <span class="ic">M</span> je největší v
+  <span class="ic">G</span> <strong>právě když</strong> <span class="ic">M′ = M ∖ H(C)</span> je největší v
+  <span class="ic">G|<sub>C</sub></span>.</p>
+</div>
+
+<figure>
+<svg viewBox="0 0 420 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stažení liché kružnice">
+  <!-- left: graph with odd cycle -->
+  <circle cx="40" cy="90" r="11" class="g-node"/>
+  <text x="40" y="120" text-anchor="middle" class="g-cap">v</text>
+  <line x1="51" y1="90" x2="90" y2="90" class="g-edge-hl"/>
+  <circle cx="100" cy="90" r="11" class="g-node"/>
+  <!-- pentagon -->
+  <polygon points="130,90 170,55 210,75 200,120 155,125" fill="none" class="g-edge"/>
+  <line x1="100" y1="90" x2="130" y2="90" class="g-edge"/>
+  <circle cx="130" cy="90" r="9" class="g-node"/>
+  <circle cx="170" cy="55" r="9" class="g-node"/>
+  <circle cx="210" cy="75" r="9" class="g-node"/>
+  <circle cx="200" cy="120" r="9" class="g-node"/>
+  <circle cx="155" cy="125" r="9" class="g-node"/>
+  <text x="170" y="160" text-anchor="middle" class="g-cap">lichá kružnice C (květ)</text>
+  <!-- arrow -->
+  <line x1="250" y1="90" x2="290" y2="90" class="g-edge" marker-end="url(#a11)"/>
+  <defs><marker id="a11" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L6,3 L0,6 Z" fill="#38506e"/></marker></defs>
+  <!-- right: contracted -->
+  <circle cx="320" cy="90" r="11" class="g-node"/>
+  <text x="320" y="120" text-anchor="middle" class="g-cap">v</text>
+  <line x1="331" y1="90" x2="370" y2="90" class="g-edge"/>
+  <circle cx="385" cy="90" r="14" class="g-node-hl"/>
+  <text x="385" y="95" text-anchor="middle" class="g-nlabel" fill="#fff">x</text>
+  <text x="385" y="120" text-anchor="middle" class="g-cap">G|C</text>
+</svg>
+<figcaption>Lichá kružnice (květ) se stáhne do jednoho uzlu — tím se graf zmenší.</figcaption>
+</figure>
+
+<h2><span class="num">11.3</span> Alternující les</h2>
+<div class="box def">
+  <span class="tag">Definice 5.10 — M-alternující les</span>
+  <p>Les <span class="ic">F</span>, kde: každý nepokrytý uzel je středem komponenty; hrany v liché
+  vzdálenosti od středu jsou v <span class="ic">M</span>; koncové uzly mají sudou vzdálenost.</p>
+  <p><strong>Sudé / liché uzly</strong> podle vzdálenosti od středu. Liché uzly mají v lese stupeň 2,
+  sudé mohou mít více.</p>
+</div>
+
+<h2><span class="num">11.4</span> Čtyři případy (sousedé sudých uzlů)</h2>
+<div class="box key">
+  <span class="tag">Vyšetřujeme souseda y sudého uzlu u</span>
+  <ol>
+    <li><strong>y ∉ U(F):</strong> <span class="ic">y</span> je pokrytý hranou <span class="ic">yz</span> →
+        přidáním <span class="ic">uy, yz</span> <strong>zvětšíme les F</strong>.</li>
+    <li><strong>Dva sudé uzly v různých komponentách:</strong> středy jsou spojeny rozšiřující cestou →
+        <strong>zvětšíme párování M</strong>.</li>
+    <li><strong>Dva sudé uzly téže komponenty:</strong> vznikne lichá kružnice <span class="ic">C</span>.
+        Podle Lemmatu 5.1 ji <strong>stáhneme</strong> → zmenšíme graf
+        (případ b se nejprve převede na a prohozením podél cesty ke středu).</li>
+    <li><strong>Žádný z předchozích</strong> (každý sudý uzel má za sousedy jen liché): párování
+        <span class="ic">M</span> je <strong>největší</strong>.</li>
+  </ol>
+</div>
+
+<div class="box note">
+  <span class="tag">Proč případ 4 = konec</span>
+  <p>Množina lichých uzlů <span class="ic">L</span> je antifaktorová: <span class="ic">G−L</span> má
+  <span class="ic">s</span> jednouzlových (lichých) komponent, takže
+  <span class="ic">c<sub>o</sub>(G−L) − |L| = s − ℓ = |X|</span> = počet nepokrytých uzlů. Podle věty 5.5
+  (Berge) je <span class="ic">M</span> největší.</p>
+</div>
+
+<h2><span class="num">11.5</span> Závěr a složitost</h2>
+<div class="box key">
+  <span class="tag">V každém kroku</span>
+  <p>1) zvětšit les <span class="ic">F</span>, 2) zvětšit párování <span class="ic">M</span>,
+  3) redukovat graf <span class="ic">G</span> (stažení), nebo 4) skončit s největším párováním.
+  Každá akce zmenšuje „rezervu“ → algoritmus je <strong>polynomiální</strong>.</p>
+</div>
+<table>
+  <thead><tr><th>Implementace</th><th>Složitost</th></tr></thead>
+  <tbody>
+    <tr><td>Praktické</td><td class="mono">O(n⁴)</td></tr>
+    <tr><td>Lepší známé</td><td class="mono">O(n·m)</td></tr>
+    <tr><td>Nejrychlejší (nejsložitější)</td><td class="mono">O(n<sup>5/2</sup>)</td></tr>
+  </tbody>
+</table>
+
+<div class="exam-points">
+  <h3>Co umět ke zkoušce</h3>
+  <ul>
+    <li>Kostru algoritmu a hlavní problém = hledání rozšiřujících cest.</li>
+    <li><strong>Lemma 5.1</strong> (stažení liché kružnice/květu) — znění + roli <span class="ic">G|<sub>C</sub></span>.</li>
+    <li>Definici <strong>M-alternujícího lesa</strong> (sudé/liché uzly).</li>
+    <li><strong>Čtyři případy</strong> sousedů sudých uzlů a co v každém dělat.</li>
+    <li>Proč případ 4 = největší párování (antifaktorová množina L, věta 5.5).</li>
+    <li>Složitost: praktické O(n⁴), nejlepší O(n<sup>5/2</sup>).</li>
+  </ul>
+</div>
+<nav class="pager"><a class="prev" href="tema-parovani-obecne.html"><span class="dir">← Předchozí · 10</span><span class="ttl">Největší párování v obecném grafu: charakterizace</span></a><a class="next" href="tema-tsp.html"><span class="dir">Další · 12 →</span><span class="ttl">Problém obchodního cestujícího (heuristiky)</span></a></nav></main></body></html>

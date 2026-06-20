@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rovinné grafy a výpočetní složitost — TGD2</title>
+<style>
+/* ============================================================
+   TGD2 — Studijní materiály
+   Vizuální směr: "matematický zápisník / rýsovací plátno"
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --ink:        #14233b;   /* hluboká inkoustová modř */
+  --ink-soft:   #38506e;
+  --paper:      #f4f0e6;   /* teplý papír */
+  --paper-2:    #ece6d6;
+  --line:       #c9bfa8;   /* rýsovací linka */
+  --line-soft:  #ddd5c2;
+  --accent:     #c2543a;   /* červený rumělkový akcent */
+  --accent-2:   #2f7d6f;   /* zelený, pro grafy/hrany */
+  --gold:       #b8893b;
+  --white:      #fbf9f3;
+  --shadow:     rgba(20, 35, 59, 0.10);
+
+  --ff-display: 'Fraunces', Georgia, serif;
+  --ff-body:    'Inter', system-ui, sans-serif;
+  --ff-mono:    'Spline Sans Mono', ui-monospace, monospace;
+
+  --maxw: 880px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--ff-body);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+  line-height: 1.62;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- vrchní lišta ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1.4rem;
+  background: rgba(244, 240, 230, 0.86);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar .home-link {
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.15s;
+}
+.topbar .home-link:hover { color: var(--accent); }
+.topbar .home-link .arrow { font-size: 1rem; }
+.topbar .crumb {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+.topbar .crumb b { color: var(--ink); }
+
+/* ---------- obal ---------- */
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 2.6rem 1.4rem 5rem;
+}
+
+/* ---------- hlavička tématu ---------- */
+.topic-head {
+  border-left: 4px solid var(--accent);
+  padding-left: 1.3rem;
+  margin-bottom: 2.4rem;
+}
+.topic-head .eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+.topic-head h1 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 5vw, 2.9rem);
+  line-height: 1.08;
+  margin: 0 0 0.6rem;
+  letter-spacing: -0.01em;
+}
+.topic-head .lede {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  max-width: 60ch;
+  margin: 0;
+}
+
+/* ---------- typografie obsahu ---------- */
+h2 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: 1.55rem;
+  margin: 2.8rem 0 0.9rem;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+h2 .num {
+  font-family: var(--ff-mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+h3 {
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: 1.12rem;
+  margin: 1.9rem 0 0.6rem;
+  color: var(--ink);
+}
+p { margin: 0.7rem 0; }
+ul, ol { margin: 0.7rem 0; padding-left: 1.4rem; }
+li { margin: 0.35rem 0; }
+strong { font-weight: 600; }
+a { color: var(--accent); }
+
+.mono { font-family: var(--ff-mono); font-size: 0.92em; }
+
+/* ---------- bloky: definice / věta / algoritmus / pozn ---------- */
+.box {
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 3px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.4rem 0;
+  position: relative;
+  box-shadow: 0 1px 0 var(--shadow);
+}
+.box .tag {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 2px;
+}
+.box.def     { border-left: 4px solid var(--ink); }
+.box.def     .tag { background: var(--ink); color: var(--paper); }
+.box.thm     { border-left: 4px solid var(--accent); }
+.box.thm     .tag { background: var(--accent); color: var(--white); }
+.box.algo    { border-left: 4px solid var(--accent-2); background: #f3f6f2; }
+.box.algo    .tag { background: var(--accent-2); color: var(--white); }
+.box.note    { border-left: 4px solid var(--gold); background: #faf6ec; }
+.box.note    .tag { background: var(--gold); color: var(--white); }
+.box.key     { border: 1px solid var(--accent); background: #fbf1ee; }
+.box.key     .tag { background: var(--accent); color: var(--white); }
+
+.box p:first-of-type { margin-top: 0; }
+.box p:last-child { margin-bottom: 0; }
+
+/* ---------- vzorce ---------- */
+.formula {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  padding: 0.85rem 1.1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.formula.center { text-align: center; }
+code, .ic {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  padding: 0.08em 0.38em;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+
+/* ---------- obrázky / grafy (SVG) ---------- */
+figure {
+  margin: 1.6rem 0;
+  text-align: center;
+}
+figure svg {
+  max-width: 100%;
+  height: auto;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.8rem;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+figcaption {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-top: 0.6rem;
+  letter-spacing: 0.01em;
+}
+
+/* SVG primitiva grafů */
+.g-node { fill: var(--white); stroke: var(--ink); stroke-width: 2; }
+.g-node-hl { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+.g-node-2 { fill: var(--accent-2); stroke: var(--ink); stroke-width: 2; }
+.g-edge { stroke: var(--ink-soft); stroke-width: 2; fill: none; }
+.g-edge-hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.g-edge-2 { stroke: var(--accent-2); stroke-width: 3.2; fill: none; }
+.g-label { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); }
+.g-nlabel { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); font-weight: 600; }
+.g-elabel { font-family: var(--ff-mono); font-size: 12px; fill: var(--accent); }
+.g-cap { font-family: var(--ff-mono); font-size: 12px; fill: var(--ink-soft); }
+
+/* ---------- tabulky ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.3rem 0;
+  font-size: 0.95rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+}
+th {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+  font-family: var(--ff-body);
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+}
+tbody tr:nth-child(even) { background: var(--paper-2); }
+td.mono, th.mono { font-family: var(--ff-mono); }
+
+/* ---------- "co umět ke zkoušce" ---------- */
+.exam-points {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 4px;
+  padding: 1.4rem 1.6rem;
+  margin: 2.4rem 0 1rem;
+}
+.exam-points h3 {
+  color: var(--white);
+  margin-top: 0;
+  font-family: var(--ff-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.exam-points ul { list-style: none; padding-left: 0; }
+.exam-points li {
+  padding-left: 1.6rem;
+  position: relative;
+  color: var(--paper);
+}
+.exam-points li::before {
+  content: "▸";
+  position: absolute;
+  left: 0.2rem;
+  color: var(--accent);
+}
+.exam-points strong { color: var(--white); }
+
+/* ---------- spodní navigace ---------- */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3.5rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
+}
+.pager a {
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 45%;
+  transition: color 0.15s;
+}
+.pager a:hover { color: var(--accent); }
+.pager a.next { text-align: right; align-items: flex-end; }
+.pager .dir { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.pager .ttl { font-weight: 600; }
+.pager a.disabled { visibility: hidden; }
+
+/* ---------- responsivita ---------- */
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .wrap { padding: 1.8rem 1.1rem 4rem; }
+  h2 { font-size: 1.35rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+</style>
+</head>
+<body><header class="topbar">
+  <a class="home-link" href="index.html"><span class="arrow">←</span> Rozcestník</a>
+  <div class="crumb">Otázka <b>14</b> / 15</div>
+</header><main class="wrap">
+<div class="topic-head">
+  <p class="eyebrow">Otázka 14 · Speciální třídy grafů</p>
+  <h1>Rovinné grafy a výpočetní složitost</h1>
+  <p class="lede">Eulerova věta a její důsledky (řídkost rovinných grafů), Kuratowského věta
+  a dopad rovinnosti na složitost algoritmů.</p>
+</div>
+
+<h2><span class="num">14.1</span> Uložení grafu, stěny</h2>
+<div class="box def">
+  <span class="tag">Definice 7.2, 7.3</span>
+  <p><strong>Rovinný graf</strong> lze uložit do roviny tak, že se hrany neprotínají (sdílí jen koncové uzly).
+  <strong>Stěny</strong> = oblasti roviny vymezené uloženým grafem (včetně jedné <em>vnější</em>).</p>
+</div>
+
+<h2><span class="num">14.2</span> Eulerova věta</h2>
+<div class="box thm">
+  <span class="tag">Věta 7.1 — Euler</span>
+  <p>Pro souvislý rovinný graf s <span class="ic">n</span> uzly, <span class="ic">m</span> hranami a
+  <span class="ic">s</span> stěnami platí <strong>Eulerův vzorec</strong>:</p>
+  <div class="formula center">n − m + s = 2.</div>
+  <p>(Důkaz indukcí podle <span class="ic">m</span>: strom odeber koncovou hranu; jinak odeber hranu mezi dvěma stěnami.)</p>
+</div>
+
+<figure>
+<svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="K4 s vyznačením stěn">
+  <circle cx="140" cy="30" r="11" class="g-node"/>
+  <circle cx="50" cy="150" r="11" class="g-node"/>
+  <circle cx="230" cy="150" r="11" class="g-node"/>
+  <circle cx="140" cy="110" r="11" class="g-node"/>
+  <line x1="140" y1="30" x2="50" y2="150" class="g-edge"/>
+  <line x1="140" y1="30" x2="230" y2="150" class="g-edge"/>
+  <line x1="50" y1="150" x2="230" y2="150" class="g-edge"/>
+  <line x1="140" y1="30" x2="140" y2="110" class="g-edge"/>
+  <line x1="50" y1="150" x2="140" y2="110" class="g-edge"/>
+  <line x1="230" y1="150" x2="140" y2="110" class="g-edge"/>
+  <text x="100" y="100" class="g-cap">3 vnitřní stěny</text>
+  <text x="140" y="190" text-anchor="middle" class="g-cap">K₄: n=4, m=6, s=4 → 4−6+4=2 ✓</text>
+</svg>
+<figcaption>Eulerův vzorec na K₄: tři vnitřní + jedna vnější stěna.</figcaption>
+</figure>
+
+<h2><span class="num">14.3</span> Důsledky — rovinné grafy jsou řídké</h2>
+<div class="box thm">
+  <span class="tag">Důsledek 7.1</span>
+  <p>Pro rovinný graf s ≥ 3 uzly: <span class="ic">|H(G)| ≤ 3|U(G)| − 6</span>.
+  (Nejvíce hran má triangulace: <span class="ic">3s = 2m</span>.)</p>
+</div>
+<div class="box thm">
+  <span class="tag">Důsledek 7.2 — bez trojúhelníků</span>
+  <p>Rovinný graf bez trojúhelníků s ≥ 4 uzly: <span class="ic">|H(G)| ≤ 2|U(G)| − 4</span>.</p>
+</div>
+<div class="box thm">
+  <span class="tag">Důsledek 7.3</span>
+  <p><span class="ic">K₅</span> a <span class="ic">K<sub>3,3</sub></span> <strong>nejsou rovinné</strong>.</p>
+  <p><span class="ic">K₅</span>: <span class="ic">10 ≤ 3·5−6 = 9</span> spor.
+  <span class="ic">K<sub>3,3</sub></span>: <span class="ic">9 ≤ 2·6−4 = 8</span> spor.</p>
+</div>
+<div class="box thm">
+  <span class="tag">Důsledek 7.4</span>
+  <p>Každý souvislý rovinný graf s ≥ 4 uzly má <strong>aspoň tři uzly stupně ≤ 5</strong>.</p>
+</div>
+
+<div class="box key">
+  <span class="tag">Význam pro složitost</span>
+  <p>Počet hran rovinného grafu je <strong>lineární</strong> v počtu uzlů (<span class="ic">O(n)</span>),
+  zatímco obecně až <span class="ic">O(n²)</span>. Prohledávání do hloubky je tedy v rovinných grafech
+  <span class="ic">O(m+n) = O(n)</span> místo <span class="ic">O(n²)</span>.</p>
+</div>
+
+<h2><span class="num">14.4</span> Kuratowského věta</h2>
+<p><strong>Půlení hrany</strong> = přidání uzlu 2. stupně. Dva grafy jsou <strong>homeomorfní</strong>,
+lze-li je konečným počtem půlení převést na izomorfní.</p>
+<div class="box thm">
+  <span class="tag">Věta 7.2 — Kuratowski</span>
+  <p>Graf je rovinný, právě když <strong>neobsahuje podgraf homeomorfní</strong> s <span class="ic">K₅</span>
+  nebo <span class="ic">K<sub>3,3</sub></span>.</p>
+  <p>Je to <strong>dobrá charakteristika</strong>. (Rovinné uložení lze najít i v <span class="ic">O(n)</span>.)</p>
+</div>
+
+<figure>
+<svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="K5 a K3,3">
+  <!-- K5 -->
+  <g transform="translate(20,20)">
+    <circle cx="55" cy="0" r="8" class="g-node"/>
+    <circle cx="105" cy="40" r="8" class="g-node"/>
+    <circle cx="85" cy="100" r="8" class="g-node"/>
+    <circle cx="25" cy="100" r="8" class="g-node"/>
+    <circle cx="5" cy="40" r="8" class="g-node"/>
+    <line x1="55" y1="0" x2="105" y2="40" class="g-edge"/>
+    <line x1="55" y1="0" x2="85" y2="100" class="g-edge"/>
+    <line x1="55" y1="0" x2="25" y2="100" class="g-edge"/>
+    <line x1="55" y1="0" x2="5" y2="40" class="g-edge"/>
+    <line x1="105" y1="40" x2="85" y2="100" class="g-edge"/>
+    <line x1="105" y1="40" x2="25" y2="100" class="g-edge"/>
+    <line x1="105" y1="40" x2="5" y2="40" class="g-edge"/>
+    <line x1="85" y1="100" x2="25" y2="100" class="g-edge"/>
+    <line x1="85" y1="100" x2="5" y2="40" class="g-edge"/>
+    <line x1="25" y1="100" x2="5" y2="40" class="g-edge"/>
+    <text x="55" y="135" text-anchor="middle" class="g-cap">K₅</text>
+  </g>
+  <!-- K3,3 -->
+  <g transform="translate(190,20)">
+    <circle cx="0" cy="10" r="7" class="g-node"/>
+    <circle cx="0" cy="55" r="7" class="g-node"/>
+    <circle cx="0" cy="100" r="7" class="g-node"/>
+    <circle cx="100" cy="10" r="7" class="g-node"/>
+    <circle cx="100" cy="55" r="7" class="g-node"/>
+    <circle cx="100" cy="100" r="7" class="g-node"/>
+    <line x1="0" y1="10" x2="100" y2="10" class="g-edge"/>
+    <line x1="0" y1="10" x2="100" y2="55" class="g-edge"/>
+    <line x1="0" y1="10" x2="100" y2="100" class="g-edge"/>
+    <line x1="0" y1="55" x2="100" y2="10" class="g-edge"/>
+    <line x1="0" y1="55" x2="100" y2="55" class="g-edge"/>
+    <line x1="0" y1="55" x2="100" y2="100" class="g-edge"/>
+    <line x1="0" y1="100" x2="100" y2="10" class="g-edge"/>
+    <line x1="0" y1="100" x2="100" y2="55" class="g-edge"/>
+    <line x1="0" y1="100" x2="100" y2="100" class="g-edge"/>
+    <text x="50" y="135" text-anchor="middle" class="g-cap">K₃,₃</text>
+  </g>
+</svg>
+<figcaption>Dva zakázané podgrafy: rovinný graf nesmí obsahovat jejich homeomorfní kopii.</figcaption>
+</figure>
+
+<h2><span class="num">14.5</span> Další věty</h2>
+<table>
+  <thead><tr><th>Věta</th><th>Tvrzení</th></tr></thead>
+  <tbody>
+    <tr><td>Věta 7.3</td><td>rovinný ⟺ lze uložit na kulovou plochu (sféru)</td></tr>
+    <tr><td>Věta 7.5 — Whitney</td><td>každý 3-souvislý graf má jednoznačné uložení na sféru</td></tr>
+    <tr><td>Věta 7.6 — Steinitz</td><td>graf mnohostěnu ⟺ rovinný a 3-souvislý</td></tr>
+    <tr><td>Věta 7.7 — Tutte (1956)</td><td>každý 4-souvislý rovinný graf je hamiltonovský</td></tr>
+  </tbody>
+</table>
+<div class="box note">
+  <span class="tag">Klikovost rovinných grafů</span>
+  <p>Z Kuratowského věty plyne <span class="ic">ω(G) ≤ 4</span> pro rovinný <span class="ic">G</span>.
+  Klikovost lze určit hrubou silou v <span class="ic">O(n⁴)</span> (procházení čtveřic uzlů).</p>
+</div>
+<p><strong>Barnetteova hypotéza (otevřený problém):</strong> každý 3-souvislý bipartitní rovinný pravidelný
+graf 3. stupně je hamiltonovský (potvrzeno pro ≤ 26 uzlů).</p>
+
+<div class="exam-points">
+  <h3>Co umět ke zkoušce</h3>
+  <ul>
+    <li><strong>Eulerův vzorec</strong> <span class="ic">n−m+s=2</span> + idea důkazu indukcí.</li>
+    <li>Důsledky 7.1–7.3: <span class="ic">m ≤ 3n−6</span>, bez trojúhelníků <span class="ic">m ≤ 2n−4</span>,
+        nerovinnost <span class="ic">K₅, K<sub>3,3</sub></span>.</li>
+    <li><strong>Kuratowského věta</strong> (homeomorfní podgraf) — dobrá charakteristika.</li>
+    <li>Dopad na složitost: <span class="ic">m = O(n)</span> → DFS v O(n), <span class="ic">ω ≤ 4</span>.</li>
+    <li>Whitney, Steinitz, Tutte (4-souvislý → hamiltonovský) alespoň znění.</li>
+  </ul>
+</div>
+<nav class="pager"><a class="prev" href="tema-hranove-grafy.html"><span class="dir">← Předchozí · 13</span><span class="ttl">Hranové grafy a výpočetní složitost</span></a><a class="next" href="tema-dobre-charakt.html"><span class="dir">Další · 15 →</span><span class="ttl">Dobré charakteristiky a dobře charakterizované problémy</span></a></nav></main></body></html>

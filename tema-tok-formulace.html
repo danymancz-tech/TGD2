@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Optimální tok v síti: formulace, charakterizační věty — TGD2</title>
+<style>
+/* ============================================================
+   TGD2 — Studijní materiály
+   Vizuální směr: "matematický zápisník / rýsovací plátno"
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --ink:        #14233b;   /* hluboká inkoustová modř */
+  --ink-soft:   #38506e;
+  --paper:      #f4f0e6;   /* teplý papír */
+  --paper-2:    #ece6d6;
+  --line:       #c9bfa8;   /* rýsovací linka */
+  --line-soft:  #ddd5c2;
+  --accent:     #c2543a;   /* červený rumělkový akcent */
+  --accent-2:   #2f7d6f;   /* zelený, pro grafy/hrany */
+  --gold:       #b8893b;
+  --white:      #fbf9f3;
+  --shadow:     rgba(20, 35, 59, 0.10);
+
+  --ff-display: 'Fraunces', Georgia, serif;
+  --ff-body:    'Inter', system-ui, sans-serif;
+  --ff-mono:    'Spline Sans Mono', ui-monospace, monospace;
+
+  --maxw: 880px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--ff-body);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+  line-height: 1.62;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- vrchní lišta ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1.4rem;
+  background: rgba(244, 240, 230, 0.86);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar .home-link {
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.15s;
+}
+.topbar .home-link:hover { color: var(--accent); }
+.topbar .home-link .arrow { font-size: 1rem; }
+.topbar .crumb {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+.topbar .crumb b { color: var(--ink); }
+
+/* ---------- obal ---------- */
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 2.6rem 1.4rem 5rem;
+}
+
+/* ---------- hlavička tématu ---------- */
+.topic-head {
+  border-left: 4px solid var(--accent);
+  padding-left: 1.3rem;
+  margin-bottom: 2.4rem;
+}
+.topic-head .eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+.topic-head h1 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 5vw, 2.9rem);
+  line-height: 1.08;
+  margin: 0 0 0.6rem;
+  letter-spacing: -0.01em;
+}
+.topic-head .lede {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  max-width: 60ch;
+  margin: 0;
+}
+
+/* ---------- typografie obsahu ---------- */
+h2 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: 1.55rem;
+  margin: 2.8rem 0 0.9rem;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+h2 .num {
+  font-family: var(--ff-mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+h3 {
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: 1.12rem;
+  margin: 1.9rem 0 0.6rem;
+  color: var(--ink);
+}
+p { margin: 0.7rem 0; }
+ul, ol { margin: 0.7rem 0; padding-left: 1.4rem; }
+li { margin: 0.35rem 0; }
+strong { font-weight: 600; }
+a { color: var(--accent); }
+
+.mono { font-family: var(--ff-mono); font-size: 0.92em; }
+
+/* ---------- bloky: definice / věta / algoritmus / pozn ---------- */
+.box {
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 3px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.4rem 0;
+  position: relative;
+  box-shadow: 0 1px 0 var(--shadow);
+}
+.box .tag {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 2px;
+}
+.box.def     { border-left: 4px solid var(--ink); }
+.box.def     .tag { background: var(--ink); color: var(--paper); }
+.box.thm     { border-left: 4px solid var(--accent); }
+.box.thm     .tag { background: var(--accent); color: var(--white); }
+.box.algo    { border-left: 4px solid var(--accent-2); background: #f3f6f2; }
+.box.algo    .tag { background: var(--accent-2); color: var(--white); }
+.box.note    { border-left: 4px solid var(--gold); background: #faf6ec; }
+.box.note    .tag { background: var(--gold); color: var(--white); }
+.box.key     { border: 1px solid var(--accent); background: #fbf1ee; }
+.box.key     .tag { background: var(--accent); color: var(--white); }
+
+.box p:first-of-type { margin-top: 0; }
+.box p:last-child { margin-bottom: 0; }
+
+/* ---------- vzorce ---------- */
+.formula {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  padding: 0.85rem 1.1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.formula.center { text-align: center; }
+code, .ic {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  padding: 0.08em 0.38em;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+
+/* ---------- obrázky / grafy (SVG) ---------- */
+figure {
+  margin: 1.6rem 0;
+  text-align: center;
+}
+figure svg {
+  max-width: 100%;
+  height: auto;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.8rem;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+figcaption {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-top: 0.6rem;
+  letter-spacing: 0.01em;
+}
+
+/* SVG primitiva grafů */
+.g-node { fill: var(--white); stroke: var(--ink); stroke-width: 2; }
+.g-node-hl { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+.g-node-2 { fill: var(--accent-2); stroke: var(--ink); stroke-width: 2; }
+.g-edge { stroke: var(--ink-soft); stroke-width: 2; fill: none; }
+.g-edge-hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.g-edge-2 { stroke: var(--accent-2); stroke-width: 3.2; fill: none; }
+.g-label { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); }
+.g-nlabel { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); font-weight: 600; }
+.g-elabel { font-family: var(--ff-mono); font-size: 12px; fill: var(--accent); }
+.g-cap { font-family: var(--ff-mono); font-size: 12px; fill: var(--ink-soft); }
+
+/* ---------- tabulky ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.3rem 0;
+  font-size: 0.95rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+}
+th {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+  font-family: var(--ff-body);
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+}
+tbody tr:nth-child(even) { background: var(--paper-2); }
+td.mono, th.mono { font-family: var(--ff-mono); }
+
+/* ---------- "co umět ke zkoušce" ---------- */
+.exam-points {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 4px;
+  padding: 1.4rem 1.6rem;
+  margin: 2.4rem 0 1rem;
+}
+.exam-points h3 {
+  color: var(--white);
+  margin-top: 0;
+  font-family: var(--ff-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.exam-points ul { list-style: none; padding-left: 0; }
+.exam-points li {
+  padding-left: 1.6rem;
+  position: relative;
+  color: var(--paper);
+}
+.exam-points li::before {
+  content: "▸";
+  position: absolute;
+  left: 0.2rem;
+  color: var(--accent);
+}
+.exam-points strong { color: var(--white); }
+
+/* ---------- spodní navigace ---------- */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3.5rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
+}
+.pager a {
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 45%;
+  transition: color 0.15s;
+}
+.pager a:hover { color: var(--accent); }
+.pager a.next { text-align: right; align-items: flex-end; }
+.pager .dir { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.pager .ttl { font-weight: 600; }
+.pager a.disabled { visibility: hidden; }
+
+/* ---------- responsivita ---------- */
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .wrap { padding: 1.8rem 1.1rem 4rem; }
+  h2 { font-size: 1.35rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+</style>
+</head>
+<body><header class="topbar">
+  <a class="home-link" href="index.html"><span class="arrow">←</span> Rozcestník</a>
+  <div class="crumb">Otázka <b>01</b> / 15</div>
+</header><main class="wrap">
+<div class="topic-head">
+  <p class="eyebrow">Otázka 01 · Optimální tok</p>
+  <h1>Optimální tok v síti</h1>
+  <p class="lede">Síť s více zdroji a stoky, cenou na hranách. Hledáme tok minimální ceny.
+  Dvě charakterizační věty: o záporných rezervních polocyklech a o potenciálech.</p>
+</div>
+
+<h2><span class="num">1.1</span> Formulace úlohy</h2>
+<p>Máme síť <span class="ic">G⃗</span> s propustností hran <span class="ic">r<sub>ij</sub></span>
+a intenzitami uzlů <span class="ic">a<sub>i</sub></span>. Navíc každé hraně přiřadíme
+<strong>cenu</strong> <span class="ic">c<sub>ij</sub> ∈ ℝ</span> (může být i záporná).</p>
+
+<div class="box def">
+  <span class="tag">Definice — cena toku</span>
+  <p>Je-li <span class="ic">x</span> tok v <span class="ic">G⃗</span>, pak číslo</p>
+  <div class="formula center">c(x) = Σ<sub>(i,j)∈H(G⃗)</sub> c<sub>ij</sub> · x<sub>ij</sub></div>
+  <p>je <strong>cena toku</strong> <span class="ic">x</span>. Tok s minimální cenou je
+  <strong>optimální tok</strong>.</p>
+</div>
+
+<div class="box note">
+  <span class="tag">Aplikace</span>
+  <p><strong>Plánování přepravy</strong> — <span class="ic">c(x)</span> = celkové přepravní náklady,
+  optimální tok = nejlevnější rozvozní plán. <strong>Úloha o skladu</strong> — zde ceny mohou být
+  i záporné (prodej vs. nákup), což ospravedlňuje předpoklad <span class="ic">c<sub>ij</sub> ∈ ℝ</span>.</p>
+</div>
+
+<figure>
+<svg viewBox="0 0 460 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Síť s tokem a cenami">
+  <!-- nodes -->
+  <line x1="90" y1="60" x2="230" y2="60" class="g-edge"/>
+  <line x1="90" y1="60" x2="90" y2="160" class="g-edge"/>
+  <line x1="230" y1="60" x2="370" y2="60" class="g-edge"/>
+  <line x1="90" y1="160" x2="230" y2="160" class="g-edge"/>
+  <line x1="230" y1="160" x2="370" y2="160" class="g-edge"/>
+  <line x1="230" y1="60" x2="230" y2="160" class="g-edge"/>
+  <line x1="370" y1="60" x2="370" y2="160" class="g-edge"/>
+  <!-- arrowheads omitted for clarity -->
+  <circle cx="90" cy="60" r="16" class="g-node"/>
+  <circle cx="230" cy="60" r="16" class="g-node"/>
+  <circle cx="370" cy="60" r="16" class="g-node"/>
+  <circle cx="90" cy="160" r="16" class="g-node"/>
+  <circle cx="230" cy="160" r="16" class="g-node"/>
+  <circle cx="370" cy="160" r="16" class="g-node"/>
+  <text x="90" y="65" text-anchor="middle" class="g-nlabel">1</text>
+  <text x="230" y="65" text-anchor="middle" class="g-nlabel">2</text>
+  <text x="370" y="65" text-anchor="middle" class="g-nlabel">3</text>
+  <text x="90" y="165" text-anchor="middle" class="g-nlabel">4</text>
+  <text x="230" y="165" text-anchor="middle" class="g-nlabel">5</text>
+  <text x="370" y="165" text-anchor="middle" class="g-nlabel">6</text>
+  <text x="160" y="50" text-anchor="middle" class="g-elabel">x(c,r)</text>
+  <text x="300" y="50" text-anchor="middle" class="g-elabel">x(c,r)</text>
+  <text x="20" y="205" class="g-cap">Značení hran: x<tspan dy="-1">ij</tspan>(c<tspan dy="1">ij</tspan>, r<tspan>ij</tspan>) = tok(cena, propustnost)</text>
+</svg>
+<figcaption>Obecná síť — značení u hran je vždy tok(cena, propustnost).</figcaption>
+</figure>
+
+<h2><span class="num">1.2</span> Záporné rezervní polocykly</h2>
+<p>V symetrizaci grafu pracujeme s <strong>polocestami</strong> a <strong>polocykly</strong>.
+Hrany ve směru obíhání jsou <em>souhlasné</em>, opačné <em>nesouhlasné</em>.</p>
+
+<div class="box def">
+  <span class="tag">Definice — cena polocyklu</span>
+  <div class="formula center">c(P) = Σ<sub>souhlasné</sub> c(h) − Σ<sub>nesouhlasné</sub> c(h)</div>
+</div>
+
+<div class="box def">
+  <span class="tag">Definice — zvětšení toku</span>
+  <p>Tok <span class="ic">x</span> lze na polocyklu <span class="ic">C</span> zvětšit o <span class="ic">δ</span>, jestliže</p>
+  <ul>
+    <li><span class="ic">x<sub>ij</sub> + δ ≤ r<sub>ij</sub></span> pro každou <strong>souhlasnou</strong> hranu,</li>
+    <li><span class="ic">x<sub>ij</sub> − δ ≥ 0</span> pro každou <strong>nesouhlasnou</strong> hranu.</li>
+  </ul>
+</div>
+
+<figure>
+<svg viewBox="0 0 360 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Záporný rezervní polocyklus">
+  <polygon points="80,150 280,150 180,40" fill="none" class="g-edge-hl"/>
+  <circle cx="80" cy="150" r="16" class="g-node-hl"/>
+  <circle cx="280" cy="150" r="16" class="g-node-hl"/>
+  <circle cx="180" cy="40" r="16" class="g-node-hl"/>
+  <text x="80" y="155" text-anchor="middle" class="g-nlabel" fill="#fff">1</text>
+  <text x="280" y="155" text-anchor="middle" class="g-nlabel" fill="#fff">2</text>
+  <text x="180" y="45" text-anchor="middle" class="g-nlabel" fill="#fff">3</text>
+  <text x="180" y="172" text-anchor="middle" class="g-elabel">1(2,3)</text>
+  <text x="105" y="90" text-anchor="middle" class="g-elabel">3(3,3)</text>
+  <text x="255" y="90" text-anchor="middle" class="g-elabel">1(2,2)</text>
+  <text x="180" y="195" text-anchor="middle" class="g-cap">c(C) &lt; 0, lze zvětšit o 1 → ZRP</text>
+</svg>
+<figcaption>Záporný rezervní polocyklus (ZRP): záporná cena + možnost zvětšit tok.</figcaption>
+</figure>
+
+<h2><span class="num">1.3</span> Charakterizační věta o ZRP</h2>
+<div class="box thm">
+  <span class="tag">Věta 1.1</span>
+  <p>Tok <span class="ic">x</span> je <strong>optimální</strong>, právě když jej nelze zvětšit na žádném
+  polocyklu záporné ceny.</p>
+</div>
+<div class="box note">
+  <span class="tag">Pojem ZRP</span>
+  <p>Polocyklus záporné ceny, na němž lze tok zvětšit, se nazývá <strong>záporný rezervní polocyklus (ZRP)</strong>.
+  Věta tedy říká: tok je optimální ⟺ neexistuje pro něj ZRP.</p>
+</div>
+<p><strong>Idea důkazu (←):</strong> Není-li <span class="ic">x</span> optimální, existuje lepší tok
+<span class="ic">y</span>. Cirkulaci <span class="ic">z = y − x</span> rozložíme na toky v cyklech;
+protože <span class="ic">c(y) &lt; c(x)</span>, některý odpovídající polocyklus musí být záporný.</p>
+
+<h2><span class="num">1.4</span> Věta o potenciálech</h2>
+<div class="box thm">
+  <span class="tag">Věta 1.3 — potenciály</span>
+  <p>Tok <span class="ic">x<sub>ij</sub></span> je optimální, právě když existuje ohodnocení uzlů čísly
+  <span class="ic">V<sub>i</sub></span> tak, že:</p>
+  <div class="formula">
+V<sub>j</sub> − V<sub>i</sub> ≤ c<sub>ij</sub>   jestliže x<sub>ij</sub> = 0
+V<sub>j</sub> − V<sub>i</sub> = c<sub>ij</sub>   jestliže 0 &lt; x<sub>ij</sub> &lt; r<sub>ij</sub>
+V<sub>j</sub> − V<sub>i</sub> ≥ c<sub>ij</sub>   jestliže x<sub>ij</sub> = r<sub>ij</sub></div>
+</div>
+<p><strong>Opora toku</strong> <span class="ic">G⃗<sub>x</sub></span> = faktor tvořený hranami s
+<span class="ic">0 &lt; x<sub>ij</sub> &lt; r<sub>ij</sub></span>. Potenciály se konstruují postupně:
+zvolíme <span class="ic">V<sub>i₀</sub> = 0</span> a šíříme podél hran opory (<span class="ic">V<sub>j</sub> = V<sub>i</sub> + c<sub>ij</sub></span>).</p>
+
+<div class="exam-points">
+  <h3>Co umět ke zkoušce</h3>
+  <ul>
+    <li><strong>Formulace</strong> ceny toku a definice optimálního toku.</li>
+    <li><strong>Věta 1.1 (ZRP)</strong> — znění + idea důkazu přes cirkulaci <span class="ic">z = y − x</span>.</li>
+    <li><strong>Věta 1.3 (potenciály)</strong> — tři podmínky podle vztahu <span class="ic">x<sub>ij</sub></span> k <span class="ic">r<sub>ij</sub></span>.</li>
+    <li><strong>Rozdíl:</strong> ZRP <em>není</em> dobrá charakteristika sám o sobě; věta o potenciálech <em>je</em> (viz otázka 15).</li>
+    <li>Souvislost: nalezení ZRP → hledání záporného cyklu → <strong>Floydův algoritmus</strong> (viz otázka 02).</li>
+  </ul>
+</div>
+<nav class="pager"><a class="prev disabled"></a><a class="next" href="tema-tok-metody.html"><span class="dir">Další · 02 →</span><span class="ttl">Optimální tok v síti: metody řešení</span></a></nav></main></body></html>

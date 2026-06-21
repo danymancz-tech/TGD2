@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TGD2 — Studijní materiály ke zkoušce</title>
+<style>
+/* ============================================================
+   TGD2 — Studijní materiály
+   Vizuální směr: "matematický zápisník / rýsovací plátno"
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --ink:        #14233b;   /* hluboká inkoustová modř */
+  --ink-soft:   #38506e;
+  --paper:      #f4f0e6;   /* teplý papír */
+  --paper-2:    #ece6d6;
+  --line:       #c9bfa8;   /* rýsovací linka */
+  --line-soft:  #ddd5c2;
+  --accent:     #c2543a;   /* červený rumělkový akcent */
+  --accent-2:   #2f7d6f;   /* zelený, pro grafy/hrany */
+  --gold:       #b8893b;
+  --white:      #fbf9f3;
+  --shadow:     rgba(20, 35, 59, 0.10);
+
+  --ff-display: 'Fraunces', Georgia, serif;
+  --ff-body:    'Inter', system-ui, sans-serif;
+  --ff-mono:    'Spline Sans Mono', ui-monospace, monospace;
+
+  --maxw: 880px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--ff-body);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+  line-height: 1.62;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- vrchní lišta ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1.4rem;
+  background: rgba(244, 240, 230, 0.86);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar .home-link {
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.15s;
+}
+.topbar .home-link:hover { color: var(--accent); }
+.topbar .home-link .arrow { font-size: 1rem; }
+.topbar .crumb {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+.topbar .crumb b { color: var(--ink); }
+
+/* ---------- obal ---------- */
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 2.6rem 1.4rem 5rem;
+}
+
+/* ---------- hlavička tématu ---------- */
+.topic-head {
+  border-left: 4px solid var(--accent);
+  padding-left: 1.3rem;
+  margin-bottom: 2.4rem;
+}
+.topic-head .eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+.topic-head h1 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 5vw, 2.9rem);
+  line-height: 1.08;
+  margin: 0 0 0.6rem;
+  letter-spacing: -0.01em;
+}
+.topic-head .lede {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  max-width: 60ch;
+  margin: 0;
+}
+
+/* ---------- typografie obsahu ---------- */
+h2 {
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: 1.55rem;
+  margin: 2.8rem 0 0.9rem;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+h2 .num {
+  font-family: var(--ff-mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+h3 {
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: 1.12rem;
+  margin: 1.9rem 0 0.6rem;
+  color: var(--ink);
+}
+p { margin: 0.7rem 0; }
+ul, ol { margin: 0.7rem 0; padding-left: 1.4rem; }
+li { margin: 0.35rem 0; }
+strong { font-weight: 600; }
+a { color: var(--accent); }
+
+.mono { font-family: var(--ff-mono); font-size: 0.92em; }
+
+/* ---------- bloky: definice / věta / algoritmus / pozn ---------- */
+.box {
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 3px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.4rem 0;
+  position: relative;
+  box-shadow: 0 1px 0 var(--shadow);
+}
+.box .tag {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 2px;
+}
+.box.def     { border-left: 4px solid var(--ink); }
+.box.def     .tag { background: var(--ink); color: var(--paper); }
+.box.thm     { border-left: 4px solid var(--accent); }
+.box.thm     .tag { background: var(--accent); color: var(--white); }
+.box.algo    { border-left: 4px solid var(--accent-2); background: #f3f6f2; }
+.box.algo    .tag { background: var(--accent-2); color: var(--white); }
+.box.note    { border-left: 4px solid var(--gold); background: #faf6ec; }
+.box.note    .tag { background: var(--gold); color: var(--white); }
+.box.key     { border: 1px solid var(--accent); background: #fbf1ee; }
+.box.key     .tag { background: var(--accent); color: var(--white); }
+
+.box p:first-of-type { margin-top: 0; }
+.box p:last-child { margin-bottom: 0; }
+
+/* ---------- vzorce ---------- */
+.formula {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  padding: 0.85rem 1.1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.formula.center { text-align: center; }
+code, .ic {
+  font-family: var(--ff-mono);
+  background: var(--paper-2);
+  padding: 0.08em 0.38em;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+
+/* ---------- obrázky / grafy (SVG) ---------- */
+figure {
+  margin: 1.6rem 0;
+  text-align: center;
+}
+figure svg {
+  max-width: 100%;
+  height: auto;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.8rem;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+figcaption {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-top: 0.6rem;
+  letter-spacing: 0.01em;
+}
+
+/* SVG primitiva grafů */
+.g-node { fill: var(--white); stroke: var(--ink); stroke-width: 2; }
+.g-node-hl { fill: var(--accent); stroke: var(--ink); stroke-width: 2; }
+.g-node-2 { fill: var(--accent-2); stroke: var(--ink); stroke-width: 2; }
+.g-edge { stroke: var(--ink-soft); stroke-width: 2; fill: none; }
+.g-edge-hl { stroke: var(--accent); stroke-width: 3.2; fill: none; }
+.g-edge-2 { stroke: var(--accent-2); stroke-width: 3.2; fill: none; }
+.g-label { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); }
+.g-nlabel { font-family: var(--ff-mono); font-size: 13px; fill: var(--ink); font-weight: 600; }
+.g-elabel { font-family: var(--ff-mono); font-size: 12px; fill: var(--accent); }
+.g-cap { font-family: var(--ff-mono); font-size: 12px; fill: var(--ink-soft); }
+
+/* ---------- tabulky ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.3rem 0;
+  font-size: 0.95rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+}
+th {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+  font-family: var(--ff-body);
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+}
+tbody tr:nth-child(even) { background: var(--paper-2); }
+td.mono, th.mono { font-family: var(--ff-mono); }
+
+/* ---------- "co umět ke zkoušce" ---------- */
+.exam-points {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 4px;
+  padding: 1.4rem 1.6rem;
+  margin: 2.4rem 0 1rem;
+}
+.exam-points h3 {
+  color: var(--white);
+  margin-top: 0;
+  font-family: var(--ff-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.exam-points ul { list-style: none; padding-left: 0; }
+.exam-points li {
+  padding-left: 1.6rem;
+  position: relative;
+  color: var(--paper);
+}
+.exam-points li::before {
+  content: "▸";
+  position: absolute;
+  left: 0.2rem;
+  color: var(--accent);
+}
+.exam-points strong { color: var(--white); }
+
+/* ---------- spodní navigace ---------- */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3.5rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
+}
+.pager a {
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 45%;
+  transition: color 0.15s;
+}
+.pager a:hover { color: var(--accent); }
+.pager a.next { text-align: right; align-items: flex-end; }
+.pager .dir { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.pager .ttl { font-weight: 600; }
+.pager a.disabled { visibility: hidden; }
+
+/* ---------- responsivita ---------- */
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .wrap { padding: 1.8rem 1.1rem 4rem; }
+  h2 { font-size: 1.35rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+</style>
+<style>
+  .hero {
+    position: relative;
+    border: 1px solid var(--line);
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 6px;
+    padding: 3rem 2.4rem 2.6rem;
+    margin: 2.4rem 0 3rem;
+    overflow: hidden;
+  }
+  .hero::before {
+    content:""; position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(244,240,230,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(244,240,230,.06) 1px, transparent 1px);
+    background-size: 26px 26px;
+    pointer-events:none;
+  }
+  .hero .kicker {
+    font-family: var(--ff-mono); font-size:.8rem; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 .8rem; position:relative;
+  }
+  .hero h1 {
+    font-family: var(--ff-display); font-weight:600;
+    font-size: clamp(2.1rem, 6vw, 3.6rem); line-height:1.04;
+    margin:0 0 1rem; letter-spacing:-.02em; position:relative; color:var(--white);
+  }
+  .hero h1 em { font-style:italic; color:var(--accent); }
+  .hero p { max-width:58ch; color:#cdd6e2; position:relative; margin:0; font-size:1.06rem; }
+  .hero .meta {
+    display:flex; gap:1.6rem; flex-wrap:wrap; margin-top:1.6rem; position:relative;
+    font-family:var(--ff-mono); font-size:.82rem; color:#9fb0c4;
+  }
+  .hero .meta b { color:var(--white); }
+  /* tiny network motif */
+  .hero svg.motif { position:absolute; right:-10px; top:-10px; opacity:.5; }
+
+  .group { margin: 2.6rem 0; }
+  .group-head {
+    font-family: var(--ff-display); font-weight:600; font-size:1.4rem;
+    margin:0 0 1rem; padding-left:.9rem; border-left:4px solid var(--gc);
+    display:flex; align-items:center; gap:.7rem;
+  }
+  .card-grid {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:.9rem;
+  }
+  .card {
+    display:flex; flex-direction:column; gap:.35rem;
+    text-decoration:none; color:var(--ink);
+    background:var(--white); border:1px solid var(--line);
+    border-left:4px solid var(--gc);
+    border-radius:4px; padding:1rem 1.1rem;
+    transition: transform .14s ease, box-shadow .14s ease;
+    position:relative;
+  }
+  .card:hover { transform:translateY(-3px); box-shadow:0 8px 20px var(--shadow); }
+  .card-num {
+    font-family:var(--ff-mono); font-size:.78rem; font-weight:600;
+    color:var(--gc); letter-spacing:.08em;
+  }
+  .card-title { font-weight:600; font-size:1.02rem; line-height:1.25; }
+  .card-sub {
+    font-family:var(--ff-mono); font-size:.74rem; color:var(--ink-soft);
+    line-height:1.45;
+  }
+
+  .exam-info {
+    background:var(--paper-2); border:1px solid var(--line);
+    border-radius:5px; padding:1.6rem 1.8rem; margin:3rem 0 1rem;
+  }
+  .exam-info h2 {
+    margin:0 0 .8rem; font-family:var(--ff-display); font-size:1.3rem; border:0; padding:0;
+  }
+  .exam-info .row { display:flex; gap:1.2rem; flex-wrap:wrap; }
+  .exam-info .pill {
+    flex:1 1 200px; background:var(--white); border:1px solid var(--line-soft);
+    border-radius:4px; padding:.9rem 1.1rem;
+  }
+  .exam-info .pill .lbl {
+    font-family:var(--ff-mono); font-size:.72rem; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--accent); margin-bottom:.3rem;
+  }
+  .site-foot {
+    margin-top:3rem; padding-top:1.4rem; border-top:1px solid var(--line);
+    font-family:var(--ff-mono); font-size:.76rem; color:var(--ink-soft);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:.6rem;
+  }
+</style>
+</head>
+<body>
+<main class="wrap" style="max-width:980px">
+
+  <section class="hero">
+    <svg class="motif" width="220" height="200" viewBox="0 0 220 200" aria-hidden="true">
+      <line x1="40" y1="40" x2="150" y2="30" stroke="#c2543a" stroke-width="2"/>
+      <line x1="150" y1="30" x2="190" y2="110" stroke="#2f7d6f" stroke-width="2"/>
+      <line x1="40" y1="40" x2="80" y2="130" stroke="#9fb0c4" stroke-width="1.5"/>
+      <line x1="80" y1="130" x2="190" y2="110" stroke="#9fb0c4" stroke-width="1.5"/>
+      <line x1="150" y1="30" x2="80" y2="130" stroke="#9fb0c4" stroke-width="1.5"/>
+      <line x1="80" y1="130" x2="130" y2="175" stroke="#c2543a" stroke-width="2"/>
+      <circle cx="40" cy="40" r="9" fill="#14233b" stroke="#f4f0e6" stroke-width="2"/>
+      <circle cx="150" cy="30" r="9" fill="#c2543a" stroke="#f4f0e6" stroke-width="2"/>
+      <circle cx="190" cy="110" r="9" fill="#2f7d6f" stroke="#f4f0e6" stroke-width="2"/>
+      <circle cx="80" cy="130" r="9" fill="#14233b" stroke="#f4f0e6" stroke-width="2"/>
+      <circle cx="130" cy="175" r="9" fill="#b8893b" stroke="#f4f0e6" stroke-width="2"/>
+    </svg>
+    <p class="kicker">KMA/TGD2 · Příprava ke zkoušce</p>
+    <h1>Teorie grafů a<br>diskrétní <em>optimalizace</em></h1>
+    <p>Patnáct zkouškových otázek zpracovaných do přehledných karet: definice, věty s&nbsp;ideou důkazu,
+    algoritmy, obrázky a&nbsp;shrnutí „co umět“. Společná nit celého předmětu je vzájemná převoditelnost
+    úloh a&nbsp;jejich výpočetní složitost.</p>
+    <div class="meta">
+      <span><b>15</b> otázek</span>
+      <span><b>4</b> tematické okruhy</span>
+      <span>Důraz: <b>algoritmy &amp; složitost</b></span>
+    </div>
+  </section>
+
+  <a href="reseni-prikladu.html" style="display:flex; align-items:center; gap:1.2rem; flex-wrap:wrap;
+     text-decoration:none; color:var(--paper); background:var(--ink);
+     border:1px solid var(--line); border-left:5px solid var(--accent); border-radius:6px;
+     padding:1.4rem 1.8rem; margin:0 0 2.6rem; transition:transform .14s ease, box-shadow .14s ease;"
+     onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 24px var(--shadow)'"
+     onmouseout="this.style.transform='';this.style.boxShadow=''">
+    <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true" style="flex:0 0 auto;">
+      <line x1="12" y1="14" x2="44" y2="14" stroke="#c2543a" stroke-width="2.5"/>
+      <line x1="12" y1="28" x2="44" y2="28" stroke="#2f7d6f" stroke-width="2.5"/>
+      <line x1="12" y1="42" x2="34" y2="42" stroke="#b8893b" stroke-width="2.5"/>
+      <circle cx="12" cy="14" r="5" fill="#c2543a"/><circle cx="44" cy="14" r="5" fill="#fbf9f3"/>
+      <circle cx="12" cy="28" r="5" fill="#2f7d6f"/><circle cx="44" cy="28" r="5" fill="#fbf9f3"/>
+      <circle cx="12" cy="42" r="5" fill="#b8893b"/>
+    </svg>
+    <span style="flex:1 1 260px;">
+      <span style="display:block; font-family:var(--ff-mono); font-size:.78rem; letter-spacing:.18em;
+        text-transform:uppercase; color:var(--accent); margin-bottom:.35rem;">Nově &middot; krok za krokem</span>
+      <span style="display:block; font-family:var(--ff-display); font-weight:600; font-size:1.5rem;
+        line-height:1.12; color:var(--white);">Řešené příklady</span>
+      <span style="display:block; font-family:var(--ff-mono); font-size:.8rem; color:#cdd6e2; margin-top:.4rem;">
+        tok &middot; simplex &middot; dvoufázová &middot; rozvoz &middot; dualita &middot; párování &middot; hranové grafy &middot; TSP</span>
+    </span>
+    <span style="font-family:var(--ff-mono); font-size:1.4rem; color:var(--accent);">&rarr;</span>
+  </a>
+
+  <a href="prehled.html" style="display:flex; align-items:center; gap:1.2rem; flex-wrap:wrap;
+     text-decoration:none; color:var(--ink); background:var(--white);
+     border:1px solid var(--line); border-left:5px solid var(--accent-2); border-radius:6px;
+     padding:1.4rem 1.8rem; margin:0 0 2.6rem; transition:transform .14s ease, box-shadow .14s ease;"
+     onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 24px var(--shadow)'"
+     onmouseout="this.style.transform='';this.style.boxShadow=''">
+    <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true" style="flex:0 0 auto;">
+      <rect x="11" y="9" width="34" height="38" rx="3" fill="none" stroke="#2f7d6f" stroke-width="2.5"/>
+      <line x1="18" y1="19" x2="38" y2="19" stroke="#c2543a" stroke-width="2.5"/>
+      <line x1="18" y1="28" x2="38" y2="28" stroke="#b8893b" stroke-width="2.5"/>
+      <line x1="18" y1="37" x2="31" y2="37" stroke="#14233b" stroke-width="2.5"/>
+    </svg>
+    <span style="flex:1 1 260px;">
+      <span style="display:block; font-family:var(--ff-mono); font-size:.78rem; letter-spacing:.18em;
+        text-transform:uppercase; color:var(--accent-2); margin-bottom:.35rem;">Tahák &middot; rychlé opakování</span>
+      <span style="display:block; font-family:var(--ff-display); font-weight:600; font-size:1.5rem;
+        line-height:1.12; color:var(--ink);">Přehled vět a algoritmů</span>
+      <span style="display:block; font-family:var(--ff-mono); font-size:.8rem; color:var(--ink-soft); margin-top:.4rem;">
+        algoritmy &amp; složitost &middot; věty &amp; dobré charakteristiky</span>
+    </span>
+    <span style="font-family:var(--ff-mono); font-size:1.4rem; color:var(--accent-2);">&rarr;</span>
+  </a>
+
+  <section class="group"><h2 class="group-head" style="--gc:#c2543a">Tok a lineární programování</h2><div class="card-grid"><a class="card" href="tema-tok-formulace.html" style="--gc:#c2543a">
+          <span class="card-num">01</span>
+          <span class="card-title">Optimální tok: formulace, charakterizační věty</span>
+          <span class="card-sub">cena toku · ZRP · potenciály</span>
+        </a><a class="card" href="tema-tok-metody.html" style="--gc:#c2543a">
+          <span class="card-num">02</span>
+          <span class="card-title">Optimální tok: metody řešení</span>
+          <span class="card-sub">pomocný graf Ĝ · Floyd · potenciály</span>
+        </a><a class="card" href="tema-lp-formulace.html" style="--gc:#c2543a">
+          <span class="card-num">03</span>
+          <span class="card-title">LP: formulace, geometrie</span>
+          <span class="card-sub">3 tvary · vrcholy polyedru</span>
+        </a><a class="card" href="tema-lp-simplex.html" style="--gc:#c2543a">
+          <span class="card-num">04</span>
+          <span class="card-title">LP: simplexový algoritmus</span>
+          <span class="card-sub">2 pravidla · dvoufázová metoda · degenerace</span>
+        </a><a class="card" href="tema-lp-dualita.html" style="--gc:#c2543a">
+          <span class="card-num">07</span>
+          <span class="card-title">LP: dualita úloh</span>
+          <span class="card-sub">slabá/silná věta · stínové ceny</span>
+        </a></div></section><section class="group"><h2 class="group-head" style="--gc:#b8893b">Celočíselné LP</h2><div class="card-grid"><a class="card" href="tema-clp-unimod.html" style="--gc:#b8893b">
+          <span class="card-num">05</span>
+          <span class="card-title">Celočíselné LP a TU matice</span>
+          <span class="card-sub">totální unimodularita · věty 4.3–4.6</span>
+        </a><a class="card" href="tema-clp-vetve-secne.html" style="--gc:#b8893b">
+          <span class="card-num">06</span>
+          <span class="card-title">CLP: větve a meze, sečné nadroviny</span>
+          <span class="card-sub">Kolesar (batoh) · Gomory</span>
+        </a></div></section><section class="group"><h2 class="group-head" style="--gc:#2f7d6f">Párování</h2><div class="card-grid"><a class="card" href="tema-parovani-bipart.html" style="--gc:#2f7d6f">
+          <span class="card-num">08</span>
+          <span class="card-title">Největší párování v bipartitním grafu</span>
+          <span class="card-sub">Berge · Hall · maďarská metoda</span>
+        </a><a class="card" href="tema-parovani-ohodnoc.html" style="--gc:#2f7d6f">
+          <span class="card-num">09</span>
+          <span class="card-title">Optimální párování (přiřazovací problém)</span>
+          <span class="card-sub">graf rovnosti · Kuhn–Munkres</span>
+        </a><a class="card" href="tema-parovani-obecne.html" style="--gc:#2f7d6f">
+          <span class="card-num">10</span>
+          <span class="card-title">Párování v obecném grafu: charakterizace</span>
+          <span class="card-sub">Tutte · deficience · Berge 5.5</span>
+        </a><a class="card" href="tema-parovani-edmonds.html" style="--gc:#2f7d6f">
+          <span class="card-num">11</span>
+          <span class="card-title">Edmondsův algoritmus</span>
+          <span class="card-sub">stahování květů · alternující les</span>
+        </a></div></section><section class="group"><h2 class="group-head" style="--gc:#38506e">Speciální grafy a heuristiky</h2><div class="card-grid"><a class="card" href="tema-tsp.html" style="--gc:#38506e">
+          <span class="card-num">12</span>
+          <span class="card-title">Problém obchodního cestujícího</span>
+          <span class="card-sub">penalizace · 2-aproximace (kostra)</span>
+        </a><a class="card" href="tema-hranove-grafy.html" style="--gc:#38506e">
+          <span class="card-num">13</span>
+          <span class="card-title">Hranové grafy a složitost</span>
+          <span class="card-sub">Krausz · Beineke · L(G)</span>
+        </a><a class="card" href="tema-rovinne-grafy.html" style="--gc:#38506e">
+          <span class="card-num">14</span>
+          <span class="card-title">Rovinné grafy a složitost</span>
+          <span class="card-sub">Euler · Kuratowski</span>
+        </a><a class="card" href="tema-dobre-charakt.html" style="--gc:#38506e">
+          <span class="card-num">15</span>
+          <span class="card-title">Dobré charakteristiky</span>
+          <span class="card-sub">NP ∩ co-NP · přehled vět</span>
+        </a></div></section>
+
+  <section class="exam-info">
+    <h2>Průběh zkoušky</h2>
+    <div class="row">
+      <div class="pill">
+        <div class="lbl">Písemná část</div>
+        2 vyučovací hodiny · 3 příklady · povoleny písemné materiály (skripta apod.)
+      </div>
+      <div class="pill">
+        <div class="lbl">Ústní část</div>
+        2 otázky z patnácti · hlavní důraz na <b>algoritmické aspekty</b> a&nbsp;výpočetní složitost
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-foot">
+    <span>Studijní materiály dle pracovních textů přednášek (Z. Ryjáček)</span>
+    <span>Tipy: každá karta končí sekcí „Co umět ke zkoušce“.</span>
+  </footer>
+
+</main>
+</body>
+</html>
